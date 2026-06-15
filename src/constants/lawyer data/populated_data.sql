@@ -1,4 +1,5 @@
 -- Random data for lawyers
+USE lawyers;
 
 INSERT INTO contact (fname, lname, email, phone) VALUES 
 ('Harvey', 'Specter', 'harvey@specterliber.com', '0712345678'),
@@ -10,7 +11,7 @@ INSERT INTO contact (fname, lname, email, phone) VALUES
 -- Assuming IDs 1-5 were generated for the above contacts
 
 -- Education
-INSERT INTO education (lawyer_id, degree, university) VALUES 
+INSERT INTO education (lawyer_id, degree, university) VALUES
 (1, 'J.D.', 'Harvard Law School'),
 (2, 'J.D.', 'Harvard Law School'),
 (3, 'J.D.', 'Columbia Law School'),

@@ -1,10 +1,12 @@
+USE lawyers;
+
 INSERT INTO contact(fname, lname, email, phone)
 VALUES ('Michael', 'Ross', 'mikeRoss@suits.com', '0700000000');
 
 INSERT INTO credits (bar_lisence, state_of_bar, lawyer_id)
 VALUES (99999, 'NY', 6);
 
-INSERT INTO education (lawyer_id, degree, university)
+INSERT INTO education(lawyer_id, degree, university)
 VALUES (6, 'None', 'None');
 
 INSERT INTO jurisdiction (lawyer_id, jurisdiction)
