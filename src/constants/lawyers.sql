@@ -1,5 +1,0 @@
-CREATE DATABASE lawyers;
-
-CREATE TABLE contact;
-
-ALTER
