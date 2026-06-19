@@ -4,10 +4,16 @@ USE lawyers;
 
 CREATE TABLE contact(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    fname VARCHAR(25) NOT NULL,
-    lname VARCHAR(25) NOT NULL,
+    website VARCHAR(100) NOT NULL,
+    phone VARCHAR(15) CHECK (phone LIKE '07[0-9]{8}'),
     email VARCHAR(50) NOT NULL CHECK (email LIKE '%@%.%'),
-    phone VARCHAR(15) CHECK (phone LIKE '07[0-9]{8}')
+    address VARCHAR(50)
+);
+
+CREATE TABLE description(
+    id INT PRIMARY KEY REFERENCES contact (id),
+    name VARCHAR(50) NOT NULL,
+    description TEXT NOT NULL
 );
 
 CREATE TABLE cases(
@@ -17,7 +23,7 @@ CREATE TABLE cases(
       file_link VARCHAR(200) CHECK
           (file_link LIKE '%.txt' OR file_link LIKE '%.pdf' or file_link LIKE '%.md') NOT NULL,
       win BOOLEAN,
-      lawyer_id INT NOT NULL REFERENCES contact (id)
+      id INT NOT NULL REFERENCES contact (id)
 );
 
 CREATE TABLE prices(
@@ -28,13 +34,6 @@ CREATE TABLE prices(
        PRIMARY KEY (lawyer_id, case_type)
 );
 
-CREATE TABLE credits(
-    bar_lisence DECIMAL(7, 0) CHECK (bar_lisence > 10000) NOT NULL,
-    state_of_bar VARCHAR(2) NOT NULL,
-    lawyer_id INT NOT NULL REFERENCES contact (id),
-    primary key (bar_lisence, state_of_bar)
-);
-
 CREATE TABLE jurisdiction(
     lawyer_id INT NOT NULL REFERENCES contact (id),
     jurisdiction VARCHAR(25) NOT NULL,
@@ -42,15 +41,8 @@ CREATE TABLE jurisdiction(
 );
 
 CREATE TABLE scopelaw(
-    lawyer_id INT NOT NULL REFERENCES contact (id),
-    scope VARCHAR(25) NOT NULL,
-    PRIMARY KEY (lawyer_id, scope)
+    id INT NOT NULL REFERENCES contact (id),
+    county VARCHAR(25) NOT NULL,
+    PRIMARY KEY (id, county)
 );
-
-CREATE TABLE education(
-    lawyer_id INT NOT NULL REFERENCES contact (id),
-    degree VARCHAR(25) NOT NULL,
-    university VARCHAR(25) NOT NULL,
-    PRIMARY KEY (lawyer_id, degree)
-)
 
