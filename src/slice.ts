@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { CalendarEvent, FileData, Message } from "./types";
-import { initialMessage } from "./assistantAI/prompt";
+import { initialMessage } from "@/constants/assistantAI/prompt";
 
 export interface LocationData {
   country: string;

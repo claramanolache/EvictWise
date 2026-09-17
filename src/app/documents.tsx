@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { setEvictionNotice, setLeaseAgreement } from "../slice";
+import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import Layout from "@/components/Layout";
 import Upload from "@/components/Upload";
 import { RootState } from "@/store";

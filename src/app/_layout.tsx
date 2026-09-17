@@ -6,6 +6,7 @@ import { persistor, store } from "@/store";
 import { Colors } from "@/constants/theme";
 import { MenuProvider } from "@/context/MenuContext";
 import React from "react";
+import { TranslationProvider } from "@/Translation/TranslationContext";
 
 import DOMMatrix from "@thednp/dommatrix";
 
@@ -19,14 +20,16 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <MenuProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: theme.background },
-            }}
-          />
-        </MenuProvider>
+        <TranslationProvider>
+          <MenuProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.background },
+              }}
+            />
+          </MenuProvider>
+        </TranslationProvider>
       </PersistGate>
     </Provider>
   );

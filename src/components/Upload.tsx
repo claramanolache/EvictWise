@@ -8,7 +8,7 @@ import { parsePdfToMarkdown } from "@/pdf";
 import Markdown from "react-native-markdown-display";
 import { themeToMarkdown } from "@/md";
 import OpenAI from "openai";
-import { extractEventsPrompt } from "@/assistantAI/prompt";
+import { extractEventsPrompt } from "@/constants/assistantAI/prompt";
 import { useDispatch } from "react-redux";
 import { addEvent, clearEventsByDocument } from "@/slice";
 

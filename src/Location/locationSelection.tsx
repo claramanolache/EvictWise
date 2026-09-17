@@ -176,10 +176,10 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                     {selectedLocation.zipCode && <Text style={styles.confirmDetail}>Zip Code: {selectedLocation.zipCode}</Text>}
 
                     <View style={styles.confirmActions}>
-                         <Pressable style={[styles.button, styles.secondaryButton, isSmall && styles.confirmActionButton, {marginRight: 10}]} onPress={() => setSelectionMode('initial')}>
+                         <Pressable style={[styles.button, styles.secondaryButton, isSmall && styles.confirmActions, {marginRight: 10}]} onPress={() => setSelectionMode('initial')}>
                             <Text style={styles.secondaryButtonText}>Back</Text>
                         </Pressable>
-                        <Pressable style={[styles.button, isSmall && styles.confirmActionButton]} onPress={handleConfirm}>
+                        <Pressable style={[styles.button, isSmall && styles.confirmActions]} onPress={handleConfirm}>
                             <Text style={styles.buttonText}>Confirm</Text>
                         </Pressable>
                     </View>

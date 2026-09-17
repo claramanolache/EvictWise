@@ -20,7 +20,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { addMessage } from "@/slice";
 import MessageRender from "@/components/MessageRender";
-import { systemPrompt } from "@/assistantAI/prompt";
+import { systemPrompt } from "@/constants/assistantAI/prompt";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function Index() {

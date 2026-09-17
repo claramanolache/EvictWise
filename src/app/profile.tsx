@@ -3,9 +3,9 @@ import { getTheme, Fonts, Spacing } from "@/constants/theme";
 import Layout from "@/components/Layout";
 import React, { useState } from "react";
 import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootState } from '@/store';
 import { useRouter } from 'expo-router';
-import LocationSelection from "../Location/locationSelection";
+import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
