@@ -15,19 +15,22 @@ import { ReactNode, useEffect, useRef } from "react";
 import { useMenu } from "@/context/MenuContext";
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
 
+import { useTranslation } from "@/Translation/TranslationContext";
+
 interface LayoutProps {
   children: ReactNode;
 }
 
 const menuItems = [
-  { label: "Chat", route: "/" },
-  { label: "Documents", route: "/documents" },
-  { label: "Profile", route: "/profile" },
-  { label: "Calendar", route: "/calendar" },
+  { label: "menuChat", route: "/" },
+  { label: "menuDocuments", route: "/documents" },
+  { label: "menuProfile", route: "/profile" },
+  { label: "menuCalendar", route: "/calendar" },
 ];
 
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const { menuOpen, setMenuOpen } = useMenu();
@@ -66,13 +69,15 @@ export default function Layout({ children }: LayoutProps) {
             onPress={() => handleNavigation(item.route)}
           >
             <Text style={[styles.menuItemText, { color: theme.text }]}>
-              {item.label}
+              {t(item.label)}
             </Text>
           </Pressable>
         ))}
       </Animated.View>
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t(menuOpen ? "closeMenu" : "openMenu")}
         style={styles.hamburger}
         onPress={() => setMenuOpen(!menuOpen)}
       >

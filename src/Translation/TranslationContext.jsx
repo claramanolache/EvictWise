@@ -47,10 +47,47 @@ const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
   title: "Messages",
+  menuChat: "Chat",
+  menuDocuments: "Documents",
+  menuProfile: "Profile",
+  menuCalendar: "Calendar",
+  calendarEventsFor: "Events for",
+  calendarNoEvents: "You have nothing for this day!",
+  calendarFromEviction: "From eviction notice",
+  calendarFromLease: "From lease agreement",
+  openMenu: "Open menu",
+  closeMenu: "Close menu",
   language: "Language",
   conversation: "Conversation",
-  messagePlaceholder: "Write a message",
+  messagePlaceholder: "Type your message...",
   send: "Send",
+  startConversation: "Start a conversation...",
+  profileTitle: "Profile Page",
+  yourInformation: "Your Information",
+  editingMode: "(Editing Mode)",
+  clickToEdit: "Click to edit",
+  evictionNoticeLabel: "Eviction Notice:",
+  leaseAgreementLabel: "Lease Agreement:",
+  locationLabel: "Location:",
+  notUploaded: "Not uploaded",
+  notSet: "Not set",
+  doneEditing: "Done Editing",
+  editInformation: "Edit Information",
+  selectLocation: "Select Your Location",
+  useCurrentLocation: "Use Current Location",
+  enterManually: "Enter Manually",
+  cityPlaceholder: "Enter your city...",
+  confirmLocation: "Confirm Location:",
+  cityLabel: "City:",
+  stateLabel: "State:",
+  countryLabel: "Country:",
+  zipCodeLabel: "Zip Code:",
+  back: "Back",
+  confirm: "Confirm",
+  locationPermissionDenied: "Permission to access location was denied",
+  locationDetailsUnavailable: "Could not determine location details from coordinates.",
+  locationFailed: "Failed to get location. Please try again.",
+  locationSaved: "Location saved successfully!",
   translate: "Translate",
   selectLanguage: "Translate all messages to",
   cancel: "Cancel",
@@ -63,10 +100,6 @@ export function TranslationProvider({ children }) {
   const [conversationTranslation, setConversationTranslation] = useState(
     /** @type {{ language: string } | null} */ (null),
   );
-  const translateConversation = useCallback((language) => {
-    // A fresh selection also lets users retry the same language after a failure.
-    setConversationTranslation({ language });
-  }, []);
 
   const [language, setLanguageState] = useState(() => {
     return (
@@ -90,6 +123,12 @@ export function TranslationProvider({ children }) {
     );
   }, []);
 
+  const translateConversation = useCallback((nextLanguage) => {
+    setLanguage(nextLanguage);
+    // A fresh selection also lets users retry the same language after a failure.
+    setConversationTranslation({ language: nextLanguage });
+  }, [setLanguage]);
+
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.lang = language;
@@ -101,7 +140,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-${language}`;
+    const cacheKey = `interface-v4-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

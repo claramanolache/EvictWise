@@ -1,3 +1,4 @@
+import { useTranslation } from "@/Translation/TranslationContext";
 import {
   Text,
   View,
@@ -24,6 +25,7 @@ import { systemPrompt } from "@/constants/assistantAI/prompt";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function Index() {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const params = useLocalSearchParams();
@@ -180,7 +182,7 @@ export default function Index() {
                 { color: theme.textSecondary },
               ]}
             >
-              Start a conversation...
+              {t("startConversation")}
             </Text>
           )}
           {messages.map((msg) => (
@@ -216,7 +218,7 @@ export default function Index() {
                 backgroundColor: theme.backgroundSecondary,
               },
             ]}
-            placeholder="Type your message..."
+            placeholder={t("messagePlaceholder")}
             placeholderTextColor={theme.textSecondary}
             value={inputText}
             onChangeText={setInputText}
@@ -248,7 +250,7 @@ export default function Index() {
                 },
               ]}
             >
-              Send
+              {t("send")}
             </Text>
           </TouchableOpacity>
         </View>

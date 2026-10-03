@@ -214,7 +214,7 @@ export default function MessageRender({
         })
         .catch(() => {
           if (request !== translationRequest.current) return;
-          setTranslationError(t("translationFailed"));
+          setTranslationError("translationFailed");
         })
         .finally(() => {
           if (request === translationRequest.current) {
@@ -226,7 +226,7 @@ export default function MessageRender({
     return () => {
       translationRequest.current += 1;
     };
-  }, [conversationTranslation, content, msg.id, translateMessage, t]);
+  }, [conversationTranslation, content, msg.id, translateMessage]);
 
   function handleTranslate(targetLanguage: string) {
     setLanguagePickerVisible(false);
@@ -393,7 +393,7 @@ export default function MessageRender({
               marginTop: 4,
             }}
           >
-            {translationError}
+            {t(translationError)}
           </Text>
         )}
 

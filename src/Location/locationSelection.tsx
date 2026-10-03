@@ -1,3 +1,4 @@
+import { useTranslation } from "@/Translation/TranslationContext";
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { useDispatch } from 'react-redux';
@@ -10,6 +11,7 @@ interface LocationSelectionProps {
 }
 
 const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', onSaveSuccess }) => {
+    const { t } = useTranslation();
     const [selectionMode, setSelectionMode] = useState<'initial' | 'manual' | 'confirm'>('initial');
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +24,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
         try {
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                alert('Permission to access location was denied');
+                alert(t("locationPermissionDenied"));
                 setLoading(false);
                 return;
             }
@@ -55,11 +57,11 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                 setSelectedLocation(locationData);
                 setSelectionMode('confirm');
             } else {
-                alert('Could not determine location details from coordinates.');
+                alert(t("locationDetailsUnavailable"));
             }
         } catch (error) {
             console.error("Error getting location:", error);
-            alert(`Failed to get location: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            alert(t("locationFailed"));
         } finally {
             setLoading(false);
         }
@@ -125,7 +127,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
     const handleConfirm = () => {
         if (selectedLocation) {
             dispatch(setLocation(selectedLocation));
-            alert('Location saved successfully!');
+            alert(t("locationSaved"));
             onSaveSuccess?.(); // Call the callback if it exists
         }
     };
@@ -135,15 +137,15 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Select Your Location</Text>
+            <Text style={styles.title}>{t("selectLocation")}</Text>
 
             {selectionMode === 'initial' && (
                 <View style={styles.buttonContainer}>
                     <Pressable style={styles.button} onPress={handleCurrentLocation}>
-                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Use Current Location</Text>}
+                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t("useCurrentLocation")}</Text>}
                     </Pressable>
                     <Pressable style={[styles.button, styles.secondaryButton]} onPress={() => setSelectionMode('manual')}>
-                        <Text style={styles.secondaryButtonText}>Enter Manually</Text>
+                        <Text style={styles.secondaryButtonText}>{t("enterManually")}</Text>
                     </Pressable>
                 </View>
             )}
@@ -152,7 +154,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                 <View style={styles.searchContainer}>
                     <TextInput
                         style={styles.input}
-                        placeholder="Enter your city..."
+                        placeholder={t("cityPlaceholder")}
                         value={searchQuery}
                         onChangeText={handleSearchChange}
                     />
@@ -162,25 +164,25 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                         </Pressable>
                     ))}
                     <Pressable style={styles.cancelButton} onPress={() => setSelectionMode('initial')}>
-                         <Text style={styles.cancelButtonText}>Cancel</Text>
+                         <Text style={styles.cancelButtonText}>{t("cancel")}</Text>
                     </Pressable>
                 </View>
             )}
 
             {selectionMode === 'confirm' && selectedLocation && (
                 <View style={styles.confirmContainer}>
-                    <Text style={styles.confirmTitle}>Confirm Location:</Text>
-                    <Text style={styles.confirmDetail}>City: {selectedLocation.city}</Text>
-                    <Text style={styles.confirmDetail}>State: {selectedLocation.state}</Text>
-                    <Text style={styles.confirmDetail}>Country: {selectedLocation.country}</Text>
-                    {selectedLocation.zipCode && <Text style={styles.confirmDetail}>Zip Code: {selectedLocation.zipCode}</Text>}
+                    <Text style={styles.confirmTitle}>{t("confirmLocation")}</Text>
+                    <Text style={styles.confirmDetail}>{t("cityLabel")} {selectedLocation.city}</Text>
+                    <Text style={styles.confirmDetail}>{t("stateLabel")} {selectedLocation.state}</Text>
+                    <Text style={styles.confirmDetail}>{t("countryLabel")} {selectedLocation.country}</Text>
+                    {selectedLocation.zipCode && <Text style={styles.confirmDetail}>{t("zipCodeLabel")} {selectedLocation.zipCode}</Text>}
 
                     <View style={styles.confirmActions}>
                          <Pressable style={[styles.button, styles.secondaryButton, isSmall && styles.confirmActions, {marginRight: 10}]} onPress={() => setSelectionMode('initial')}>
-                            <Text style={styles.secondaryButtonText}>Back</Text>
+                            <Text style={styles.secondaryButtonText}>{t("back")}</Text>
                         </Pressable>
                         <Pressable style={[styles.button, isSmall && styles.confirmActions]} onPress={handleConfirm}>
-                            <Text style={styles.buttonText}>Confirm</Text>
+                            <Text style={styles.buttonText}>{t("confirm")}</Text>
                         </Pressable>
                     </View>
                 </View>

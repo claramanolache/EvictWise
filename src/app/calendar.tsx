@@ -1,3 +1,4 @@
+import { useTranslation } from "@/Translation/TranslationContext";
 import Layout from "@/components/Layout";
 import { getTheme } from "@/constants/theme";
 import { RootState } from "@/store";
@@ -19,6 +20,7 @@ import { useSelector } from "react-redux";
 const menuHeight = 400;
 
 export default function Calendar() {
+  const { language, t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const scrollViewRef = useRef<any>(null);
@@ -62,7 +64,9 @@ export default function Calendar() {
   };
 
   const months = [];
-  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayLabels = Array.from({ length: 7 }, (_, day) =>
+    new Date(2024, 0, 7 + day).toLocaleDateString(language, { weekday: "short" }),
+  );
 
   const dayCellStyle = {
     position: "relative",
@@ -81,7 +85,7 @@ export default function Calendar() {
 
   for (let i = -8; i < 8; i++) {
     const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-    const monthName = date.toLocaleString("default", { month: "long" });
+    const monthName = date.toLocaleDateString(language, { month: "long", year: "numeric" });
     const year = date.getFullYear();
     const daysInMonth = new Date(year, date.getMonth() + 1, 0).getDate();
     const startingDay = new Date(year, date.getMonth(), 1).getDay();
@@ -238,7 +242,7 @@ export default function Calendar() {
             color: theme.text,
           }}
         >
-          {monthName} {year}
+          {monthName}
         </Text>
 
         {/* Weekday Labels Headers */}
@@ -295,6 +299,12 @@ export default function Calendar() {
           flex: 1,
         }}
       >
+        <Text
+          accessibilityRole="header"
+          style={{ color: theme.text, fontSize: 28, fontWeight: "700", padding: 16 }}
+        >
+          {t("menuCalendar")}
+        </Text>
         <ScrollView
           ref={scrollViewRef}
           onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
@@ -337,11 +347,12 @@ export default function Calendar() {
               marginBottom: 32,
             }}
           >
-            Events for{" "}
-            {new Date(...lastSelectedDate).toLocaleString("default", {
+            {t("calendarEventsFor")}{" "}
+            {new Date(...lastSelectedDate).toLocaleDateString(language, {
               month: "short",
-            })}{" "}
-            {lastSelectedDate[2]}, {lastSelectedDate[0]}
+              day: "numeric",
+              year: "numeric",
+            })}
           </Text>
           {selectedDaysEvents.length === 0 && (
             <Text
@@ -351,7 +362,7 @@ export default function Calendar() {
                 fontStyle: "italic",
               }}
             >
-              You have nothing for this day!
+              {t("calendarNoEvents")}
             </Text>
           )}
           {selectedDaysEvents.map((event) => (
@@ -388,8 +399,8 @@ export default function Calendar() {
                 >
                   {
                     {
-                      eviction: "From eviction notice",
-                      lease: "From lease agreement",
+                      eviction: t("calendarFromEviction"),
+                      lease: t("calendarFromLease"),
                     }[event.document]
                   }
                 </Text>

@@ -1,3 +1,4 @@
+import { useTranslation } from "@/Translation/TranslationContext";
 import { Text, StyleSheet, useColorScheme, View, Pressable } from "react-native";
 import { getTheme, Fonts, Spacing } from "@/constants/theme";
 import Layout from "@/components/Layout";
@@ -8,6 +9,7 @@ import { useRouter } from 'expo-router';
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const router = useRouter();
@@ -55,7 +57,7 @@ export default function ProfilePage() {
         <Text style={[styles.infoLabel, isHovered && styles.hoveredText]}>{label}</Text>
         <Text style={[styles.infoValue, isHovered && styles.hoveredText]}>{value}</Text>
         {isEditing && (
-            <Text style={styles.editHintText}>Click to edit</Text>
+            <Text style={styles.editHintText}>{t("clickToEdit")}</Text>
         )}
       </Pressable>
     );
@@ -63,17 +65,17 @@ export default function ProfilePage() {
 
   return (
     <Layout>
-      <Text style={[styles.title, { color: theme.text }]}>Profile Page</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t("profileTitle")}</Text>
 
       <View style={styles.infoContainer}>
         <View style={styles.headerRow}>
-             <Text style={styles.infoTitle}>Your Information</Text>
-             {isEditing && <Text style={styles.editingModeText}>(Editing Mode)</Text>}
+             <Text style={styles.infoTitle}>{t("yourInformation")}</Text>
+             {isEditing && <Text style={styles.editingModeText}>{t("editingMode")}</Text>}
         </View>
 
-        {renderRow('Eviction Notice:', evictionNotice ? evictionNotice.name : 'Not uploaded', 'eviction')}
-        {renderRow('Lease Agreement:', leaseAgreement ? leaseAgreement.name : 'Not uploaded', 'lease')}
-        {renderRow('Location:', location ? `${location.city}, ${location.state}, ${location.country}` : 'Not set', 'location')}
+        {renderRow(t("evictionNoticeLabel"), evictionNotice ? evictionNotice.name : t("notUploaded"), 'eviction')}
+        {renderRow(t("leaseAgreementLabel"), leaseAgreement ? leaseAgreement.name : t("notUploaded"), 'lease')}
+        {renderRow(t("locationLabel"), location ? `${location.city}, ${location.state}, ${location.country}` : t("notSet"), 'location')}
         
         {showLocationEditor && (
              <View style={styles.locationEditorContainer}>
@@ -83,7 +85,7 @@ export default function ProfilePage() {
       </View>
 
       <Pressable style={styles.editButton} onPress={handleEditClick}>
-        <Text style={styles.editButtonText}>{isEditing ? "Done Editing" : "Edit Information"}</Text>
+        <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
       </Pressable>
     </Layout>
   );
