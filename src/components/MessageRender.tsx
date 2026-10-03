@@ -1,6 +1,7 @@
 import { getTheme, Spacing } from "@/constants/theme";
 import { themeToMarkdown } from "@/md";
 import { useTranslation } from "@/Translation/TranslationContext";
+import { LANGUAGES } from "@/Translation/languages";
 import { Message } from "@/types";
 
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
@@ -15,6 +16,8 @@ import {
 
 import {
   Animated,
+  Modal,
+  ScrollView,
   Pressable,
   Platform,
   Text,
@@ -166,7 +169,8 @@ export default function MessageRender({
    * TranslationContext.
    */
   const {
-    language,
+    conversationTranslation,
+    translateConversation,
     t,
     translateMessage,
   } = useTranslation();
@@ -187,89 +191,46 @@ export default function MessageRender({
   const [translationError, setTranslationError] =
     useState("");
 
+  const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
   const translationRequest = useRef(0);
 
-  /*
-   * Whenever the user changes languages,
-   * clear the old translation.
-   *
-   * Otherwise, for example, a Spanish
-   * translation could remain visible after
-   * switching the app to French.
-   */
+  const content = msg.type === "chat" ? msg.content : null;
+
   useEffect(() => {
-    translationRequest.current += 1;
+    const request = ++translationRequest.current;
+    setLanguagePickerVisible(false);
     setTranslatedText("");
     setShowTranslation(false);
     setTranslationError("");
     setTranslationLoading(false);
+
+    if (conversationTranslation && content?.trim()) {
+      setTranslationLoading(true);
+      translateMessage(content, "auto", conversationTranslation.language)
+        .then((result) => {
+          if (request !== translationRequest.current) return;
+          setTranslatedText(result);
+          setShowTranslation(true);
+        })
+        .catch(() => {
+          if (request !== translationRequest.current) return;
+          setTranslationError(t("translationFailed"));
+        })
+        .finally(() => {
+          if (request === translationRequest.current) {
+            setTranslationLoading(false);
+          }
+        });
+    }
+
     return () => {
       translationRequest.current += 1;
     };
-  }, [
-    language,
-    msg.id,
-    msg.type,
-    msg.type === "chat" ? msg.content : "",
-  ]);
+  }, [conversationTranslation, content, msg.id, translateMessage, t]);
 
-  async function handleTranslate() {
-    if (msg.type !== "chat" || translationLoading) {
-      return;
-    }
-
-    /*
-     * If we're currently showing the
-     * translation, just switch back to
-     * the original.
-     */
-    if (showTranslation) {
-      setShowTranslation(false);
-      return;
-    }
-
-    /*
-     * If we've already translated this
-     * message, don't call Google again.
-     */
-    if (translatedText) {
-      setShowTranslation(true);
-      return;
-    }
-
-    const request = ++translationRequest.current;
-    setTranslationLoading(true);
-    setTranslationError("");
-
-    try {
-      /*
-       * "auto" means Google determines
-       * whether the original message is
-       * English, Spanish, etc.
-       */
-      const result = await translateMessage(
-        msg.content,
-        "auto",
-      );
-
-      if (request !== translationRequest.current) return;
-      setTranslatedText(result);
-      setShowTranslation(true);
-    } catch (error) {
-      if (request !== translationRequest.current) return;
-      console.error(
-        "Message translation failed:",
-        error,
-      );
-
-      setTranslationError(
-        t("translationFailed"),
-      );
-    } finally {
-      if (request === translationRequest.current) {
-        setTranslationLoading(false);
-      }
-    }
+  function handleTranslate(targetLanguage: string) {
+    setLanguagePickerVisible(false);
+    translateConversation(targetLanguage);
   }
 
   /*
@@ -320,8 +281,7 @@ export default function MessageRender({
         {/* Translation button */}
         <Pressable
           accessibilityRole="button"
-          onPress={handleTranslate}
-          disabled={translationLoading}
+          onPress={() => setLanguagePickerVisible(true)}
           style={{
             alignSelf: "flex-start",
             marginTop: 6,
@@ -350,12 +310,79 @@ export default function MessageRender({
             >
               {translationLoading
                 ? t("translating")
-                : showTranslation
-                  ? t("showOriginal")
-                  : t("translate")}
+                : t("translate")}
             </Text>
           </View>
         </Pressable>
+
+        {showTranslation && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              translationRequest.current += 1;
+              setTranslationLoading(false);
+              setShowTranslation(false);
+              setTranslationError("");
+            }}
+            style={{ alignSelf: "flex-start", paddingVertical: 8 }}
+          >
+            <Text style={{ color: theme.textSecondary, fontSize: 11 }}>
+              {t("showOriginal")}
+            </Text>
+          </Pressable>
+        )}
+
+        <Modal
+          visible={languagePickerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLanguagePickerVisible(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: Spacing.four,
+            }}
+          >
+            <View
+              accessibilityViewIsModal
+              style={{
+                backgroundColor: theme.background,
+                borderRadius: 16,
+                padding: Spacing.four,
+                width: "100%",
+                maxWidth: 400,
+                maxHeight: "85%",
+              }}
+            >
+              <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: "600", marginBottom: 16 }}>
+                {t("selectLanguage")}
+              </Text>
+              <ScrollView>
+                {LANGUAGES.map(({ code, name }) => (
+                  <Pressable
+                    key={code}
+                    accessibilityRole="button"
+                    onPress={() => void handleTranslate(code)}
+                    style={{ paddingVertical: 12 }}
+                  >
+                    <Text style={{ color: theme.text, fontSize: 16 }}>{name}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setLanguagePickerVisible(false)}
+                style={{ alignSelf: "flex-end", padding: 12, marginTop: 8 }}
+              >
+                <Text style={{ color: theme.textSecondary }}>{t("cancel")}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
 
         {/* Translation error */}
         {translationError !== "" && (

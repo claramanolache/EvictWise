@@ -17,7 +17,9 @@ import {
  * @property {string} language
  * @property {(language: string) => void} setLanguage
  * @property {(key: string) => string} t
- * @property {(text: string, sourceLanguage?: string) => Promise<string>} translateMessage
+ * @property {(text: string, sourceLanguage?: string, targetLanguage?: string) => Promise<string>} translateMessage
+ * @property {{ language: string } | null} conversationTranslation
+ * @property {(language: string) => void} translateConversation
  * @property {boolean} interfaceLoading
  */
 const TranslationContext = createContext(
@@ -50,12 +52,22 @@ const ENGLISH_INTERFACE = {
   messagePlaceholder: "Write a message",
   send: "Send",
   translate: "Translate",
+  selectLanguage: "Translate all messages to",
+  cancel: "Cancel",
   showOriginal: "Show original",
   translating: "Translating...",
   translationFailed: "Translation failed.",
 };
 
 export function TranslationProvider({ children }) {
+  const [conversationTranslation, setConversationTranslation] = useState(
+    /** @type {{ language: string } | null} */ (null),
+  );
+  const translateConversation = useCallback((language) => {
+    // A fresh selection also lets users retry the same language after a failure.
+    setConversationTranslation({ language });
+  }, []);
+
   const [language, setLanguageState] = useState(() => {
     return (
       readStorage("preferred-language") ||
@@ -172,17 +184,17 @@ export function TranslationProvider({ children }) {
   );
 
   const translateMessage = useCallback(
-    async (text, sourceLanguage = "auto") => {
+    async (text, sourceLanguage = "auto", targetLanguage = language) => {
       if (
         sourceLanguage !== "auto" &&
-        sourceLanguage === language
+        sourceLanguage === targetLanguage
       ) {
         return text;
       }
 
       return requestTextTranslation({
         text,
-        targetLanguage: language,
+        targetLanguage,
         sourceLanguage,
       });
     },
@@ -196,6 +208,8 @@ export function TranslationProvider({ children }) {
       t,
       translateMessage,
       interfaceLoading,
+      conversationTranslation,
+      translateConversation,
     }),
     [
       language,
@@ -203,6 +217,8 @@ export function TranslationProvider({ children }) {
       t,
       translateMessage,
       interfaceLoading,
+      conversationTranslation,
+      translateConversation,
     ]
   );
 
