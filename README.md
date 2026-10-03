@@ -134,6 +134,27 @@ import es from "./LangOptions/es.json" with { type: "json" };
 
 ## Quick start
 
+Message translation requires the Express API as well as Expo. For first-time
+setup, copy `server/.env.example` to `server/.env` (keep an existing `.env`),
+set `GOOGLE_CLOUD_PROJECT`, and configure Google Application Default Credentials
+for that project. Keep credentials outside Git.
+
+Run the API from the project root in a separate terminal:
+
+```bash
+npm run server
+```
+
+The health endpoint is `http://localhost:3001/api/health`. The server loads
+`server/.env` regardless of the directory it is started from. `CLIENT_ORIGIN`
+defaults to `http://localhost:8081`; set it to the exact browser origin if Expo
+uses a different host or port.
+
+The app defaults to `http://localhost:3001` for translation. To use a different
+API host, set `EXPO_PUBLIC_TRANSLATION_API_URL` in the root `.env.local` and
+restart Expo. On a physical device, use the server's reachable LAN address
+instead of `localhost`.
+
 Install dependencies and start the app using the package manager configured in your project:
 
 ```bash
@@ -147,4 +168,3 @@ or, if this is an Expo project:
 npm install
 npx expo start
 ```
-

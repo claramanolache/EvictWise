@@ -1,4 +1,6 @@
-require("dotenv").config();
+const path = require("node:path");
+
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const express = require("express");
 const cors = require("cors");
@@ -10,7 +12,7 @@ const translationClient = new TranslationServiceClient();
 const PORT = Number(process.env.PORT || 3001);
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT;
 const CLIENT_ORIGIN =
-  process.env.CLIENT_ORIGIN || "http://localhost:5173";
+  process.env.CLIENT_ORIGIN || "http://localhost:8081";
 
 app.use(
   cors({
@@ -104,6 +106,10 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Translation server running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Translation server running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

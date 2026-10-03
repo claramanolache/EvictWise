@@ -53,6 +53,8 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "server": "node server/index.js",
+    "test:translation": "node --test server/translation.test.cjs",
     "start": "node_modules/.bin/expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "node_modules/.bin/expo run:android",

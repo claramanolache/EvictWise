@@ -11,9 +11,9 @@ export async function translateTexts({
     ? texts
     : [texts];
 
-  const response = await fetch(
-    `${API_URL}/api/translate`,
-    {
+  let response;
+  try {
+    response = await fetch(`${API_URL.replace(/\/$/, "")}/api/translate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,8 +23,15 @@ export async function translateTexts({
         targetLanguage,
         sourceLanguage,
       }),
-    }
-  );
+    });
+  } catch (cause) {
+    throw new Error(
+      "Cannot reach the translation service. Check that the API is running " +
+        "(npm run server), EXPO_PUBLIC_TRANSLATION_API_URL points to it, " +
+        "and CLIENT_ORIGIN matches the web app origin.",
+      { cause },
+    );
+  }
 
   const data = await response.json().catch(() => ({}));
 
