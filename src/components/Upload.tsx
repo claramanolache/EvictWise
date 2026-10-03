@@ -18,7 +18,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
 
-  const { upload, loading, failed } = useDocumentUpload();
+  const { upload, loading, failed, errorKey } = useDocumentUpload();
   const { t } = useTranslation();
 
   return (
@@ -45,7 +45,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
           {title}
         </Text>
       </View>
-      {failed && <Text accessibilityRole="alert" style={{ color: theme.text }}>{t("documentUploadFailed")}</Text>}
+      {failed && <Text accessibilityRole="alert" style={{ color: theme.text }}>{t(errorKey)}</Text>}
       <View
         style={{
           position: "relative",
@@ -72,7 +72,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
         {!loading && !current && (
           <>
             <Text style={{ color: theme.textSecondary }}>
-              No file currently uploaded
+              {t("documentFormats")}
             </Text>
             <FontAwesomeFreeSolid
               name="upload"

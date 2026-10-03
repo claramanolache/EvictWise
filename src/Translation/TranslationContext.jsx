@@ -69,6 +69,10 @@ const ENGLISH_INTERFACE = {
   evictionNoticeLabel: "Eviction Notice:",
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
+  documentFormats: "Upload a PDF or image (JPG, PNG, WebP), up to 20 MB.",
+  documentUnsupportedFormat: "Choose a PDF, JPG, PNG, or WebP file.",
+  documentTooLarge: "Choose a file smaller than 20 MB.",
+  documentUnreadable: "Could not read the document. Try a clearer image or a PDF with selectable text.",
   documentUploading: "Uploading document...",
   documentUploadFailed: "Could not process the document. Please try again.",
   notUploaded: "Not uploaded",
@@ -142,7 +146,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v5-${language}`;
+    const cacheKey = `interface-v6-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

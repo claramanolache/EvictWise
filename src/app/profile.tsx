@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const dispatch = useDispatch();
-  const { upload, loading: uploadLoading, failed: uploadFailed } = useDocumentUpload();
+  const { upload, loading: uploadLoading, failed: uploadFailed, errorKey } = useDocumentUpload();
   const { evictionNotice, leaseAgreement, location } = useSelector((state: RootState) => state.app);
   
   const [isEditing, setIsEditing] = useState(false);
@@ -72,6 +72,7 @@ export default function ProfilePage() {
     <Layout>
       <Text style={[styles.title, { color: theme.text }]}>{t("profileTitle")}</Text>
 
+      {isEditing && <Text style={{ color: theme.textSecondary, marginBottom: Spacing.two }}>{t("documentFormats")}</Text>}
       <View style={styles.infoContainer}>
         <View style={styles.headerRow}>
              <Text style={styles.infoTitle}>{t("yourInformation")}</Text>
@@ -90,7 +91,7 @@ export default function ProfilePage() {
       </View>
 
       {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
-      {uploadFailed && <Text accessibilityRole="alert">{t("documentUploadFailed")}</Text>}
+      {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
       <Pressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
         <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
       </Pressable>
