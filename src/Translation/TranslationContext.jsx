@@ -69,6 +69,8 @@ const ENGLISH_INTERFACE = {
   evictionNoticeLabel: "Eviction Notice:",
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
+  documentUploading: "Uploading document...",
+  documentUploadFailed: "Could not process the document. Please try again.",
   notUploaded: "Not uploaded",
   notSet: "Not set",
   doneEditing: "Done Editing",
@@ -140,7 +142,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v4-${language}`;
+    const cacheKey = `interface-v5-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

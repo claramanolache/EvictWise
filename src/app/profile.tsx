@@ -3,16 +3,18 @@ import { Text, StyleSheet, useColorScheme, View, Pressable } from "react-native"
 import { getTheme, Fonts, Spacing } from "@/constants/theme";
 import Layout from "@/components/Layout";
 import React, { useState } from "react";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { useRouter } from 'expo-router';
+import { useDocumentUpload } from "@/hooks/useDocumentUpload";
+import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
-  const router = useRouter();
+  const dispatch = useDispatch();
+  const { upload, loading: uploadLoading, failed: uploadFailed } = useDocumentUpload();
   const { evictionNotice, leaseAgreement, location } = useSelector((state: RootState) => state.app);
   
   const [isEditing, setIsEditing] = useState(false);
@@ -25,10 +27,12 @@ export default function ProfilePage() {
   };
 
   const handleRowClick = (type: 'eviction' | 'lease' | 'location') => {
-    if (!isEditing) return;
+    if (!isEditing || uploadLoading) return;
 
     if (type === 'eviction' || type === 'lease') {
-      router.push('/EvictionUploader');
+      void upload(type, (file) => {
+        dispatch(type === 'eviction' ? setEvictionNotice(file) : setLeaseAgreement(file));
+      });
     } else if (type === 'location') {
       setShowLocationEditor(!showLocationEditor);
     }
@@ -45,6 +49,7 @@ export default function ProfilePage() {
     
     return (
       <Pressable
+        disabled={uploadLoading}
         onPress={() => handleRowClick(type)}
         onHoverIn={() => setHoveredRow(type)}
         onHoverOut={() => setHoveredRow(null)}
@@ -84,7 +89,9 @@ export default function ProfilePage() {
         )}
       </View>
 
-      <Pressable style={styles.editButton} onPress={handleEditClick}>
+      {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
+      {uploadFailed && <Text accessibilityRole="alert">{t("documentUploadFailed")}</Text>}
+      <Pressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
         <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
       </Pressable>
     </Layout>
