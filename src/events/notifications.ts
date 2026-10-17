@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { CalendarEvent } from './events';
+import type { CalendarEvent } from "@/types";
 
 // --- Permission Handling ---
 export async function requestNotificationPermissions() {
@@ -29,21 +29,22 @@ export async function requestNotificationPermissions() {
  */
 const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
   const now = new Date();
-  const eventDate = event.date;
+  const eventDate = new Date(...event.date);
 
   // --- Schedule for Today (if the event is today and in the future) ---
   if (isSameDay(eventDate, now) && eventDate.getTime() > now.getTime()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: `Today: ${event.title}`,
-        body: event.desc,
-        data: { eventId: event.title }, // You can use an ID here
+        title: `Today: ${event.name}`,
+        body: event.name,
+        data: { eventId: event.id },
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: eventDate, // Schedules it for the exact time of the event
       },
     });
-    console.log(`Scheduled 'Today' notification for: ${event.title}`);
+    console.log(`Scheduled 'Today' notification for: ${event.name}`);
   }
 
   // --- Schedule for One Day Before ---
@@ -53,15 +54,16 @@ const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
   if (oneDayBefore.getTime() > now.getTime()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: `Tomorrow: ${event.title}`,
-        body: event.desc,
-        data: { eventId: event.title },
+        title: `Tomorrow: ${event.name}`,
+        body: event.name,
+        data: { eventId: event.id },
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: oneDayBefore,
       },
     });
-    console.log(`Scheduled 'One Day Away' notification for: ${event.title}`);
+    console.log(`Scheduled 'One Day Away' notification for: ${event.name}`);
   }
 
   // --- Schedule for One Week Before ---
@@ -71,15 +73,16 @@ const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
   if (oneWeekBefore.getTime() > now.getTime()) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: `In one week: ${event.title}`,
-        body: event.desc,
-        data: { eventId: event.title },
+        title: `In one week: ${event.name}`,
+        body: event.name,
+        data: { eventId: event.id },
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: oneWeekBefore,
       },
     });
-    console.log(`Scheduled 'One Week Away' notification for: ${event.title}`);
+    console.log(`Scheduled 'One Week Away' notification for: ${event.name}`);
   }
 };
 

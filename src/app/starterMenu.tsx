@@ -20,7 +20,7 @@ const StarterMenu: React.FC<Props> = ({ onNext }) => {
       <Text style={[styles.description, { color: theme.textSecondary }]}>
         We'll start by asking for your location to provide localized legal information, and then ask you to upload your eviction notice and lease agreement.
       </Text>
-      <Pressable style={[styles.button, { backgroundColor: theme.primary }]} onPress={onNext}>
+      <Pressable style={[styles.button, { backgroundColor: theme.backgroundAccent }]} onPress={onNext}>
         <Text style={[styles.buttonText, { color: theme.background }]}>Get Started</Text>
       </Pressable>
     </View>

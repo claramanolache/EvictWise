@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store'; // Assuming your store exports RootState
-import { FileData } from '../slice';
 
 // This is a placeholder for the actual calendar population logic
 const populateCalendar = (dates: Date[]) => {
@@ -48,10 +47,9 @@ const ConvertUploads = () => {
       if (evictionNotice && leaseAgreement && !processing && !aiResult) {
         setProcessing(true);
 
-        // Step 1: Convert files to Markdown (simulation)
-        // In a real app, you might fetch the file content from the URI and convert it.
-        const evictionMarkdown = `## Eviction Notice\n\nName: ${evictionNotice.name}\nSize: ${evictionNotice.size} bytes`;
-        const leaseMarkdown = `## Lease Agreement\n\nName: ${leaseAgreement.name}\nSize: ${leaseAgreement.size} bytes`;
+        // Uploaded documents already contain extracted Markdown.
+        const evictionMarkdown = evictionNotice.markdown;
+        const leaseMarkdown = leaseAgreement.markdown;
 
         // Step 2: Pass to AI
         const result = await mockAIProcessor(evictionMarkdown, leaseMarkdown);
