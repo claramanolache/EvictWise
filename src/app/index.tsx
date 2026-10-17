@@ -1,3 +1,4 @@
+import { buildChatProfileContext } from "@/utils/chatProfileContext";
 import { useTranslation } from "@/Translation/TranslationContext";
 import {
   Text,
@@ -61,7 +62,8 @@ export default function Index() {
     }
   }, [params.uploadSuccess]);
 
-  const messages = useSelector((state: RootState) => state.app.messages);
+  const profile = useSelector((state: RootState) => state.app);
+  const { messages } = profile;
   const dispatch = useDispatch();
 
   const [inputText, setInputText] = useState("");
@@ -100,6 +102,7 @@ export default function Index() {
             role: "system",
             content: systemPrompt,
           },
+          { role: "user", content: buildChatProfileContext(profile) },
           ...serializeMessages([...messages, userMessage]),
         ],
         temperature: 0.7,

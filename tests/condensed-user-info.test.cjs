@@ -11,7 +11,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname, '../s
 
 test('missing fields follow the requested five-line format without inventing facts', () => {
   assert.equal(output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '' }, null, []),
-    'User Name: Not provided\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n');
+    'User Name: Not provided\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n\nAdditional Info (from chatbox conversation)\nNot provided\n');
 });
 test('includes location, extracted details and chronological deadlines without mutating stored events', () => {
   const events = [
@@ -30,4 +30,19 @@ test('rejects missing or incorrectly typed extraction fields', () => {
   assert.throws(() => output.parseUserInfoDetails('{"userName": 12}'));
   assert.throws(() => output.parseUserInfoDetails('null'));
   assert.equal(output.parseUserInfoDetails('{"userName":"Jane","housingLocationType":"","evictionReason":""}').userName, 'Jane');
+});
+
+
+test('keeps the entire conversation under its subtitle with explicit role attribution', () => {
+  const report = output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '' }, null, [], [
+    { role: 'assistant', content: 'When did you receive the notice?' },
+    { role: 'user', content: 'October 12, by mail.' },
+    { role: 'assistant', content: 'Ask legal aid to verify the deadline.' },
+  ]);
+  const [facts, chat] = report.split('Additional Info (from chatbox conversation)');
+  assert.match(facts, /Legal reason for eviction: Not provided/);
+  assert.doesNotMatch(facts, /Ask legal aid/);
+  assert.match(chat, /User:\nOctober 12, by mail./);
+  assert.match(chat, /AI response \(not verified\):\nAsk legal aid/);
+  assert.ok(chat.indexOf('When did you') < chat.indexOf('October 12'));
 });

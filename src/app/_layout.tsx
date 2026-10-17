@@ -1,3 +1,4 @@
+import { CondensedInfoProvider } from "@/context/CondensedInfoContext";
 import { PersistGate } from "redux-persist/integration/react";
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
@@ -21,6 +22,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <TranslationProvider>
+          <CondensedInfoProvider>
           <MenuProvider>
             <Stack
               screenOptions={{
@@ -29,6 +31,7 @@ export default function RootLayout() {
               }}
             />
           </MenuProvider>
+          </CondensedInfoProvider>
         </TranslationProvider>
       </PersistGate>
     </Provider>

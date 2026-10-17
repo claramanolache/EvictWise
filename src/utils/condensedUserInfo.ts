@@ -1,4 +1,4 @@
-import type { CalendarEvent } from "@/types";
+import type { CalendarEvent, ChatMessage } from "@/types";
 import type { LocationData } from "@/slice";
 
 export interface UserInfoDetails {
@@ -19,6 +19,7 @@ export function formatUserInfo(
   details: UserInfoDetails,
   location: LocationData | null,
   events: CalendarEvent[],
+  conversation: Pick<ChatMessage, "role" | "content">[] = [],
 ): string {
   const text = (value: string) => value.trim() || "Not provided";
   const deadlines = [...events].sort((a, b) =>
@@ -35,5 +36,10 @@ export function formatUserInfo(
     `Housing Location/Type: ${text(details.housingLocationType)}`,
     `Deadlines:${deadlines.length ? "\n" + deadlines.join("\n") : " Not provided"}`,
     `Legal reason for eviction: ${text(details.evictionReason)}`,
+    "",
+    "Additional Info (from chatbox conversation)",
+    conversation.length
+      ? conversation.map((message) => `${message.role === "user" ? "User" : "AI response (not verified)"}:\n${message.content}`).join("\n\n")
+      : "Not provided",
   ].join("\n") + "\n";
 }
