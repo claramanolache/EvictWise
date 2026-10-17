@@ -29,6 +29,8 @@ function setup() {
     react: hooks,
     'react-native': { Platform: { OS: 'web' }, useColorScheme: () => 'light' },
     'react-redux': { useDispatch: () => dispatch, useSelector: fn => fn({ app: state }) },
+    '@/constants/assistantAI/prompt': { condensedInfoPrompt: 'Extract case-relevant highlights' },
+    '@/utils/condensedInfoEdits': { applyReportEdits: text => text },
     '@/slice': { setUserInfoReport: value => value },
     '@/constants/theme': { getTheme: () => ({}) },
     '@/Translation/TranslationContext': { useTranslation: () => ({ t: k => k }) },
@@ -91,7 +93,7 @@ test('user answers and subsequent AI replies both refresh the globally mounted r
   const h = setup();
   h.state.messages = [{ type: 'chat', role: 'assistant', content: 'When was the notice served?' }];
   h.render(); h.flushTimers(); await settle();
-  assert.match(h.state.userInfoReport.text, /When was the notice served/);
+  assert.doesNotMatch(h.state.userInfoReport.text, /When was the notice served/);
   h.state.messages.push({ type: 'chat', role: 'user', content: 'October 12.' });
   h.render(); h.flushTimers();
   const payload = JSON.parse(h.requests[0].request.messages[1].content);
@@ -101,7 +103,7 @@ test('user answers and subsequent AI replies both refresh the globally mounted r
   h.state.messages.push({ type: 'chat', role: 'assistant', content: 'Check the stated deadline with legal aid.' });
   h.render(); h.flushTimers();
   assert.equal(h.requests.length, 2);
-  h.requests[1].resolve(result('User')); await settle();
+  h.requests[1].resolve({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ userName: 'User', chatHighlights: [{ userDetail: 'Notice served October 12.', aiAssessment: '' }] }) } }] }); await settle();
   assert.match(h.state.userInfoReport.text, /October 12/);
-  assert.match(h.state.userInfoReport.text, /Check the stated deadline/);
+  assert.doesNotMatch(h.state.userInfoReport.text, /Check the stated deadline/);
 });

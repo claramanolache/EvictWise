@@ -1,3 +1,4 @@
+import type { ReportEdits } from "@/utils/condensedInfoEdits";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { CalendarEvent, FileData, Message } from "./types";
@@ -12,6 +13,7 @@ export interface LocationData {
 
 export interface State {
   firstTime: boolean;
+  userInfoEdits?: ReportEdits;
   userInfoReport?: { source: string; text: string } | null;
   messages: Message[];
   additionalFiles?: FileData[];
@@ -25,6 +27,7 @@ export interface State {
 
 const initialState: State = {
   firstTime: true,
+  userInfoEdits: {},
   userInfoReport: null,
   messages: [initialMessage],
   additionalFiles: [],
@@ -40,6 +43,9 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    updateUserInfoEdits: (state, action: PayloadAction<ReportEdits>) => {
+      state.userInfoEdits = { ...state.userInfoEdits, ...action.payload };
+    },
     addAdditionalFile: (state, action: PayloadAction<FileData>) => {
       (state.additionalFiles ??= []).push(action.payload);
     },
@@ -95,6 +101,7 @@ export const slice = createSlice({
 });
 
 export const {
+  updateUserInfoEdits,
   addAdditionalFile,
   setUserInfoReport,
   viewFirstTime,

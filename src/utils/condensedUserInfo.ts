@@ -1,10 +1,11 @@
-import type { CalendarEvent, ChatMessage } from "@/types";
+import type { CalendarEvent } from "@/types";
 import type { LocationData } from "@/slice";
 
 export interface UserInfoDetails {
   userName: string;
   housingLocationType: string;
   evictionReason: string;
+  chatHighlights?: { userDetail: string }[];
 }
 
 export function parseUserInfoDetails(content: string): UserInfoDetails {
@@ -12,14 +13,17 @@ export function parseUserInfoDetails(content: string): UserInfoDetails {
   if (!value || ["userName", "housingLocationType", "evictionReason"].some(
     (key) => typeof value[key] !== "string",
   )) throw new Error("Invalid user information response");
-  return value;
+  if (!Array.isArray(value.chatHighlights) || value.chatHighlights.some(
+    (item: unknown) => !item || typeof item !== "object" ||
+      !("userDetail" in item) || typeof item.userDetail !== "string" || !item.userDetail.trim(),
+  )) throw new Error("Invalid chat highlights");
+  return { ...value, chatHighlights: value.chatHighlights.map((item: { userDetail: string }) => ({ userDetail: item.userDetail })) };
 }
 
 export function formatUserInfo(
   details: UserInfoDetails,
   location: LocationData | null,
   events: CalendarEvent[],
-  conversation: Pick<ChatMessage, "role" | "content">[] = [],
 ): string {
   const text = (value: string) => value.trim() || "Not provided";
   const deadlines = [...events].sort((a, b) =>
@@ -38,8 +42,10 @@ export function formatUserInfo(
     `Legal reason for eviction: ${text(details.evictionReason)}`,
     "",
     "Additional Info (from chatbox conversation)",
-    conversation.length
-      ? conversation.map((message) => `${message.role === "user" ? "User" : "AI response (not verified)"}:\n${message.content}`).join("\n\n")
-      : "Not provided",
+    details.chatHighlights?.length
+      ? details.chatHighlights.map(({ userDetail }) =>
+          `- User reports: ${userDetail.trim()}`,
+        ).join("\n")
+      : "No case-relevant chat information provided yet.",
   ].join("\n") + "\n";
 }

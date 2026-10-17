@@ -11,7 +11,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname, '../s
 
 test('missing fields follow the requested five-line format without inventing facts', () => {
   assert.equal(output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '' }, null, []),
-    'User Name: Not provided\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n\nAdditional Info (from chatbox conversation)\nNot provided\n');
+    'User Name: Not provided\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n\nAdditional Info (from chatbox conversation)\nNo case-relevant chat information provided yet.\n');
 });
 test('includes location, extracted details and chronological deadlines without mutating stored events', () => {
   const events = [
@@ -29,20 +29,32 @@ test('includes location, extracted details and chronological deadlines without m
 test('rejects missing or incorrectly typed extraction fields', () => {
   assert.throws(() => output.parseUserInfoDetails('{"userName": 12}'));
   assert.throws(() => output.parseUserInfoDetails('null'));
-  assert.equal(output.parseUserInfoDetails('{"userName":"Jane","housingLocationType":"","evictionReason":""}').userName, 'Jane');
+  assert.equal(output.parseUserInfoDetails('{"userName":"Jane","housingLocationType":"","evictionReason":"","chatHighlights":[]}').userName, 'Jane');
 });
 
 
-test('keeps the entire conversation under its subtitle with explicit role attribution', () => {
-  const report = output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '' }, null, [], [
-    { role: 'assistant', content: 'When did you receive the notice?' },
-    { role: 'user', content: 'October 12, by mail.' },
-    { role: 'assistant', content: 'Ask legal aid to verify the deadline.' },
-  ]);
+test('includes only user highlights and ignores any legacy AI assessment fields', () => {
+  const report = output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '', chatHighlights: [
+    { userDetail: 'Has bank statements showing September rent was paid.', aiAssessment: 'Could help dispute the unpaid-rent claim.' },
+    { userDetail: 'Notice received October 12.', aiAssessment: '' },
+  ] }, null, []);
   const [facts, chat] = report.split('Additional Info (from chatbox conversation)');
-  assert.match(facts, /Legal reason for eviction: Not provided/);
-  assert.doesNotMatch(facts, /Ask legal aid/);
-  assert.match(chat, /User:\nOctober 12, by mail./);
-  assert.match(chat, /AI response \(not verified\):\nAsk legal aid/);
-  assert.ok(chat.indexOf('When did you') < chat.indexOf('October 12'));
+  assert.doesNotMatch(facts, /Could help/);
+  assert.match(chat, /User reports: Has bank statements/);
+  assert.doesNotMatch(chat, /AI assessment|Could help dispute/);
+  assert.equal((chat.match(/AI assessment/g) || []).length, 0);
+  assert.doesNotMatch(chat, /When did you|Hello|Thanks/);
+});
+
+test('rejects malformed highlights instead of displaying an unvalidated transcript', () => {
+  const base = { userName: '', housingLocationType: '', evictionReason: '' };
+  assert.throws(() => output.parseUserInfoDetails(JSON.stringify({ ...base, chatHighlights: 'full transcript' })));
+  assert.throws(() => output.parseUserInfoDetails(JSON.stringify({ ...base, chatHighlights: [{ userDetail: '', aiAssessment: 'This proves illegality' }] })));
+  assert.equal(output.parseUserInfoDetails(JSON.stringify({ ...base, chatHighlights: [] })).chatHighlights.length, 0);
+});
+
+test('parser drops AI assessment fields from model output', () => {
+  const details = output.parseUserInfoDetails(JSON.stringify({ userName: '', housingLocationType: '', evictionReason: '', chatHighlights: [{ userDetail: 'Has payment receipts.', aiAssessment: 'Could help.' }] }));
+  assert.equal(details.chatHighlights[0].aiAssessment, undefined);
+  assert.equal(details.chatHighlights[0].userDetail, 'Has payment receipts.');
 });
