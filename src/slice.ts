@@ -12,7 +12,9 @@ export interface LocationData {
 
 export interface State {
   firstTime: boolean;
+  userInfoReport?: { source: string; text: string } | null;
   messages: Message[];
+  additionalFiles?: FileData[];
 
   evictionNotice: FileData | null;
   leaseAgreement: FileData | null;
@@ -23,7 +25,9 @@ export interface State {
 
 const initialState: State = {
   firstTime: true,
+  userInfoReport: null,
   messages: [initialMessage],
+  additionalFiles: [],
 
   evictionNotice: null,
   leaseAgreement: null,
@@ -36,6 +40,12 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    addAdditionalFile: (state, action: PayloadAction<FileData>) => {
+      (state.additionalFiles ??= []).push(action.payload);
+    },
+    setUserInfoReport: (state, action: PayloadAction<{ source: string; text: string }>) => {
+      state.userInfoReport = action.payload;
+    },
     viewFirstTime: (state) => {
       state.firstTime = false;
     },
@@ -85,6 +95,8 @@ export const slice = createSlice({
 });
 
 export const {
+  addAdditionalFile,
+  setUserInfoReport,
   viewFirstTime,
   addMessage,
   clearMessages,

@@ -1,3 +1,4 @@
+import { saveOriginalFile } from "@/utils/documentFiles";
 import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import * as DocumentPicker from "expo-document-picker";
@@ -125,7 +126,8 @@ export function useDocumentUpload() {
         };
       });
       // Preserve the existing document and deadlines until processing succeeds.
-      save({ name: asset.name, markdown });
+      const originalFileId = await saveOriginalFile(asset, mimeType);
+      save({ name: asset.name, markdown, mimeType, originalFileId });
       dispatch(clearEventsByDocument(document));
       events.forEach((event) => dispatch(addEvent(event)));
     } catch (error) {

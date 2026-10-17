@@ -18,6 +18,7 @@ function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = f
     'react-native': { Platform: { OS: native ? 'ios' : 'web' } },
     'expo-document-picker': { getDocumentAsync: async options => { pickerOptions = options; return result; } },
     'expo-file-system': { File: class { async base64() { return 'dGVzdA=='; } } },
+    '@/utils/documentFiles': { saveOriginalFile: async () => 'saved-original-id' },
     '@/pdf': { parsePdfToMarkdown: async () => { parses++; return text; } },
     '@/constants/assistantAI/prompt': { extractEventsPrompt: 'Extract events' },
     '@/slice': { clearEventsByDocument: document => ({ kind: 'clear', document }), addEvent: event => ({ kind: 'add', event }) },
@@ -42,6 +43,8 @@ function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = f
 test('PDF replacement preserves its name, extracts events, and uses zero-based calendar months', async () => {
   const h = setup(); await h.run('eviction');
   assert.equal(h.saves[0].name, 'notice.pdf');
+  assert.equal(h.saves[0].originalFileId, 'saved-original-id');
+  assert.equal(h.saves[0].mimeType, 'application/pdf');
   assert.equal(h.parses(), 1);
   assert.equal(h.actions[1].event.date[1], 0);
   assert.equal(h.actions[0].document, 'eviction');

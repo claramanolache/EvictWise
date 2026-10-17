@@ -1,4 +1,4 @@
-import { View, StyleSheet } from "react-native";
+import { ScrollView } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import Layout from "@/components/Layout";
@@ -16,8 +16,8 @@ export default function Documents() {
 
   return (
     <Layout>
-      <View
-        style={{
+      <ScrollView
+        contentContainerStyle={{
           paddingVertical: 16,
           paddingHorizontal: 32,
           flexDirection: "column",
@@ -38,7 +38,7 @@ export default function Documents() {
           set={(file) => dispatch(setLeaseAgreement(file))}
           document="lease"
         />
-      </View>
+      </ScrollView>
     </Layout>
   );
 }

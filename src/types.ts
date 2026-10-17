@@ -39,6 +39,8 @@ export const serializeMessages = (
 };
 
 export type FileData = {
+  originalFileId?: string;
+  mimeType?: string;
   name: string;
   markdown: string;
 };

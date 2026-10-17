@@ -69,6 +69,23 @@ const ENGLISH_INTERFACE = {
   evictionNoticeLabel: "Eviction Notice:",
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
+  condensedUserInfo: "Condensed user info",
+  condensedInfoDescription: "Generate a text file from your documents, messages, location, and deadlines. Review the extracted information before sharing. Missing details are marked Not provided.",
+  generateUserInfo: "Generate file",
+  generatingUserInfo: "Generating file...",
+  downloadUserInfo: "Download / share file",
+  userInfoFailed: "Could not generate or save the file. Please try again.",
+  additionalInformation: "Additional information",
+  additionalInformationHelp: "Upload supporting files of any type. No app-imposed count or size limit; available device storage still applies.",
+  uploadAdditionalFiles: "Upload files",
+  additionalFilesFailed: "Some files could not be saved. Check available storage and try again. Files already saved are still available.",
+  documentNoPreview: "No preview is available for this file type. Download the original to open it.",
+  viewDocument: "View",
+  closeDocument: "Close",
+  documentOpening: "Opening document...",
+  downloadOriginalDocument: "Download original file",
+  openOriginalDocument: "Open / share original",
+  documentOriginalUnavailable: "The original file is unavailable. Showing extracted text. Re-upload the document to view its original layout.",
   documentFormats: "Upload a PDF or image (JPG, PNG, WebP), up to 20 MB.",
   documentUnsupportedFormat: "Choose a PDF, JPG, PNG, or WebP file.",
   documentTooLarge: "Choose a file smaller than 20 MB.",
@@ -146,7 +163,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v6-${language}`;
+    const cacheKey = `interface-v9-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

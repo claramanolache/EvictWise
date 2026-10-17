@@ -1,5 +1,9 @@
+import AdditionalInformation from "@/components/AdditionalInformation";
+import CondensedUserInfo from "@/components/CondensedUserInfo";
+import DocumentViewer from "@/components/DocumentViewer";
+import { FileData } from "@/types";
 import { useTranslation } from "@/Translation/TranslationContext";
-import { Text, StyleSheet, useColorScheme, View, Pressable } from "react-native";
+import { Text, StyleSheet, useColorScheme, View, Pressable, ScrollView } from "react-native";
 import { getTheme, Fonts, Spacing } from "@/constants/theme";
 import Layout from "@/components/Layout";
 import React, { useState } from "react";
@@ -17,6 +21,7 @@ export default function ProfilePage() {
   const { upload, loading: uploadLoading, failed: uploadFailed, errorKey } = useDocumentUpload();
   const { evictionNotice, leaseAgreement, location } = useSelector((state: RootState) => state.app);
   
+  const [viewedFile, setViewedFile] = useState<FileData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showLocationEditor, setShowLocationEditor] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
@@ -46,6 +51,7 @@ export default function ProfilePage() {
   // Helper function to render rows with hover and click effects during edit mode
   const renderRow = (label: string, value: string, type: 'eviction' | 'lease' | 'location') => {
     const isHovered = hoveredRow === type && isEditing;
+    const file = type === "eviction" ? evictionNotice : type === "lease" ? leaseAgreement : null;
     
     return (
       <Pressable
@@ -59,8 +65,25 @@ export default function ProfilePage() {
           isHovered && styles.hoveredRow
         ]}
       >
+        <View style={styles.infoColumns}>
         <Text style={[styles.infoLabel, isHovered && styles.hoveredText]}>{label}</Text>
+        <View style={styles.viewColumn}>
+        {file && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t("viewDocument")} ${file.name}`}
+            onPress={(event) => {
+              event.stopPropagation();
+              setViewedFile(file);
+            }}
+            style={{ padding: 10 }}
+          >
+            <Text style={{ color: "#0056b3", fontWeight: "600" }}>{t("viewDocument")}</Text>
+          </Pressable>
+        )}
+        </View>
         <Text style={[styles.infoValue, isHovered && styles.hoveredText]}>{value}</Text>
+        </View>
         {isEditing && (
             <Text style={styles.editHintText}>{t("clickToEdit")}</Text>
         )}
@@ -70,6 +93,8 @@ export default function ProfilePage() {
 
   return (
     <Layout>
+      {viewedFile && <DocumentViewer key={viewedFile.originalFileId || viewedFile.name} file={viewedFile} onClose={() => setViewedFile(null)} />}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: Spacing.four }}>
       <Text style={[styles.title, { color: theme.text }]}>{t("profileTitle")}</Text>
 
       {isEditing && <Text style={{ color: theme.textSecondary, marginBottom: Spacing.two }}>{t("documentFormats")}</Text>}
@@ -88,13 +113,17 @@ export default function ProfilePage() {
                  <LocationSelection size="small" onSaveSuccess={handleLocationSave} />
              </View>
         )}
+        <AdditionalInformation onView={setViewedFile} />
       </View>
+
+      <CondensedUserInfo />
 
       {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
       {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
       <Pressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
         <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
       </Pressable>
+      </ScrollView>
     </Layout>
   );
 }
@@ -149,7 +178,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6f2ff',
     cursor: 'pointer',
   },
+  infoColumns: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewColumn: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+  },
   infoLabel: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 16,
     fontFamily: Fonts?.sans,
     color: '#666',
@@ -158,7 +199,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts?.sans,
     fontWeight: '500',
-    maxWidth: '50%',
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'right',
   },
   hoveredText: {
       color: '#0056b3',
@@ -182,7 +225,7 @@ const styles = StyleSheet.create({
       paddingVertical: 12,
       borderRadius: 8,
       alignItems: 'center',
-      marginTop: 'auto', // Pushes to bottom if layout allows
+      marginTop: Spacing.four,
   },
   editButtonText: {
       color: 'white',
