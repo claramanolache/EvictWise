@@ -70,7 +70,8 @@ const ENGLISH_INTERFACE = {
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
   condensedUserInfo: "Condensed user info",
-  condensedInfoDescription: "Generate a text file from your documents, messages, location, and deadlines. Review the extracted information before sharing. Missing details are marked Not provided.",
+  condensedInfoDescription: "This file updates automatically when your profile information changes. Review the extracted information before sharing. Missing details are marked Not provided.",
+  refreshUserInfo: "Refresh file",
   generateUserInfo: "Generate file",
   generatingUserInfo: "Generating file...",
   downloadUserInfo: "Download / share file",
@@ -163,7 +164,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v9-${language}`;
+    const cacheKey = `interface-v10-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

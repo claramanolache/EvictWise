@@ -1,5 +1,5 @@
 import { setUserInfoReport } from "@/slice";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, Share, Text, View, useColorScheme } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import OpenAI from "openai";
@@ -14,9 +14,10 @@ export default function CondensedUserInfo() {
   const { t } = useTranslation();
   const theme = getTheme(useColorScheme());
   const dispatch = useDispatch();
-  const { messages, location, events, evictionNotice, leaseAgreement, userInfoReport: report } = useSelector((state: RootState) => state.app);
+  const { messages, location, events, evictionNotice, leaseAgreement, additionalFiles, userInfoReport: report } = useSelector((state: RootState) => state.app);
   const source = JSON.stringify({
     location, events,
+    additionalFiles: (additionalFiles ?? []).map(({ name, markdown, originalFileId }) => ({ name, markdown, originalFileId })),
     evictionNotice: evictionNotice?.markdown || "",
     leaseAgreement: leaseAgreement?.markdown || "",
     userMessages: messages.filter((message) => message.type === "chat" && message.role === "user")
@@ -24,16 +25,25 @@ export default function CondensedUserInfo() {
   });
   const latestSource = useRef(source);
   latestSource.current = source;
+  const reportRef = useRef(report);
+  reportRef.current = report;
+  const requestId = useRef(0);
+  const controller = useRef<AbortController | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const currentReport = report?.source === source ? report.text : null;
 
-  async function generate() {
+  const generate = useCallback(async () => {
+    controller.current?.abort();
+    const abortController = new AbortController();
+    controller.current = abortController;
+    const request = ++requestId.current;
+    const snapshot = JSON.parse(source);
     setBusy(true);
     setFailed(false);
     try {
       let details = { userName: "", housingLocationType: "", evictionReason: "" };
-      const hasSources = evictionNotice || leaseAgreement || JSON.parse(source).userMessages.length;
+      const hasSources = snapshot.evictionNotice || snapshot.leaseAgreement || snapshot.userMessages.length || snapshot.additionalFiles.some((file: { markdown: string }) => file.markdown.trim());
       if (hasSources) {
         const client = new OpenAI({ apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true });
         const response = await client.chat.completions.create({
@@ -45,19 +55,36 @@ export default function CondensedUserInfo() {
             { role: "user", content: source },
           ],
           max_tokens: 1500,
-        });
+        }, { signal: abortController.signal });
         if (response.choices[0]?.finish_reason !== "stop") throw new Error("Incomplete summary");
         details = parseUserInfoDetails(response.choices[0]?.message?.content || "");
       }
-      if (latestSource.current === source) {
-        dispatch(setUserInfoReport({ source, text: formatUserInfo(details, location, events) }));
+      if (request === requestId.current && latestSource.current === source && !abortController.signal.aborted) {
+        dispatch(setUserInfoReport({ source, text: formatUserInfo(details, snapshot.location, snapshot.events) }));
       }
     } catch {
-      setFailed(true);
+      if (request === requestId.current && !abortController.signal.aborted) setFailed(true);
     } finally {
-      setBusy(false);
+      if (request === requestId.current && !abortController.signal.aborted) setBusy(false);
     }
-  }
+  }, [source, dispatch]);
+
+  useEffect(() => {
+    if (reportRef.current?.source === source) {
+      setBusy(false);
+      setFailed(false);
+      return;
+    }
+    setBusy(true);
+    setFailed(false);
+    // Coalesce related profile/document/deadline updates into one request.
+    const timer = setTimeout(() => void generate(), 400);
+    return () => {
+      clearTimeout(timer);
+      controller.current?.abort();
+      requestId.current += 1;
+    };
+  }, [source, generate]);
 
   async function download() {
     if (!currentReport) return;
@@ -92,8 +119,8 @@ export default function CondensedUserInfo() {
       <Text style={{ color: theme.textSecondary }}>{fileName}</Text>
       <Text style={{ color: theme.textSecondary }}>{t("condensedInfoDescription")}</Text>
       {currentReport && <Text selectable style={{ color: theme.text, lineHeight: 24 }}>{currentReport}</Text>}
-      <Pressable accessibilityRole="button" disabled={busy} onPress={generate} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent, opacity: busy ? 0.6 : 1 }}>
-        <Text style={{ color: theme.text }}>{t(busy ? "generatingUserInfo" : "generateUserInfo")}</Text>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => void generate()} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent, opacity: busy ? 0.6 : 1 }}>
+        <Text style={{ color: theme.text }}>{t(busy ? "generatingUserInfo" : "refreshUserInfo")}</Text>
       </Pressable>
       {currentReport && <Pressable accessibilityRole="button" onPress={download} style={{ padding: 12 }}>
         <Text style={{ color: theme.text }}>{t("downloadUserInfo")}</Text>
