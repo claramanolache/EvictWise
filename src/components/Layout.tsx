@@ -23,9 +23,9 @@ interface LayoutProps {
 
 const menuItems = [
   { label: "menuChat", route: "/" },
-  { label: "menuDocuments", route: "/documents" },
   { label: "menuProfile", route: "/profile" },
   { label: "menuCalendar", route: "/calendar" },
+  { label: "menuLawyerConnect", route: "/lawyer-connect" },
 ];
 
 export default function Layout({ children }: LayoutProps) {

@@ -51,6 +51,13 @@ const ENGLISH_INTERFACE = {
   menuDocuments: "Documents",
   menuProfile: "Profile",
   menuCalendar: "Calendar",
+  menuLawyerConnect: "Lawyer Connect",
+  lawyerConnectDescription: "Find legal help through these U.S. directories. Choose an organization serving your location and contact it directly.",
+  lawyerLegalAidDescription: "Search by city or address for a legal aid organization that helps with civil legal problems.",
+  lawyerReferralDescription: "Explore lawyer referral services, free legal help, and state lawyer licensing resources.",
+  lawyerReviewProfile: "Review your profile and condensed information",
+  lawyerOpenDirectory: "Open directory",
+  lawyerLinkFailed: "Could not open the directory. Please try again.",
   calendarEventsFor: "Events for",
   calendarNoEvents: "You have nothing for this day!",
   calendarFromEviction: "From eviction notice",
@@ -164,7 +171,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v10-${language}`;
+    const cacheKey = `interface-v11-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
