@@ -1,9 +1,10 @@
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 import { useTranslation } from "@/Translation/TranslationContext";
 import { getTheme } from "@/constants/theme";
 import { CalendarEvent, FileData } from "@/types";
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
-import { Pressable, Text, useColorScheme, View } from "react-native";
+import { Pressable, Text,  View } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { themeToMarkdown } from "@/md";
 
@@ -45,7 +46,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
           {title}
         </Text>
       </View>
-      {failed && <Text accessibilityRole="alert" style={{ color: theme.text }}>{t(errorKey)}</Text>}
+      {failed && <Text accessibilityRole="alert" style={{ color: theme.textWarning, backgroundColor: theme.backgroundError, padding: 12, borderRadius: 8 }}>{t(errorKey)}</Text>}
       <View
         style={{
           position: "relative",
@@ -57,7 +58,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
           padding: !loading && current ? 16 : 0,
           aspectRatio: "1.5",
           borderWidth: 1,
-          borderColor: theme.backgroundSecondary,
+          borderColor: theme.border,
           borderRadius: 12,
         }}
       >

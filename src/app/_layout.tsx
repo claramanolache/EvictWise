@@ -1,8 +1,10 @@
+import { ThemeProvider } from "@/context/ThemeContext";
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { CondensedInfoProvider } from "@/context/CondensedInfoContext";
 import { PersistGate } from "redux-persist/integration/react";
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
-import { useColorScheme } from "react-native";
+import { } from "react-native";
 import { persistor, store } from "@/store";
 import { Colors } from "@/constants/theme";
 import { MenuProvider } from "@/context/MenuContext";
@@ -14,7 +16,7 @@ import DOMMatrix from "@thednp/dommatrix";
 // @ts-ignore
 global.DOMMatrix = DOMMatrix;
 
-export default function RootLayout() {
+function AppLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
@@ -36,4 +38,8 @@ export default function RootLayout() {
       </PersistGate>
     </Provider>
   );
+}
+
+export default function RootLayout() {
+  return <ThemeProvider><AppLayout /></ThemeProvider>;
 }

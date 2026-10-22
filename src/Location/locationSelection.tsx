@@ -1,3 +1,6 @@
+import ThemedPressable from "@/components/ThemedPressable";
+import { useAppColorScheme } from "@/context/ThemeContext";
+import { getTheme, Themes } from "@/constants/theme";
 import { useTranslation } from "@/Translation/TranslationContext";
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator } from 'react-native';
@@ -12,6 +15,7 @@ interface LocationSelectionProps {
 
 const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', onSaveSuccess }) => {
     const { t } = useTranslation();
+    const theme = getTheme(useAppColorScheme());
     const [selectionMode, setSelectionMode] = useState<'initial' | 'manual' | 'confirm'>('initial');
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -133,7 +137,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
     };
 
     const isSmall = size === 'small';
-    const styles = isSmall ? smallStyles : normalStyles;
+    const styles = isSmall ? smallStyles(theme) : normalStyles(theme);
 
     return (
         <View style={styles.container}>
@@ -141,12 +145,12 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
 
             {selectionMode === 'initial' && (
                 <View style={styles.buttonContainer}>
-                    <Pressable style={styles.button} onPress={handleCurrentLocation}>
-                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t("useCurrentLocation")}</Text>}
-                    </Pressable>
-                    <Pressable style={[styles.button, styles.secondaryButton]} onPress={() => setSelectionMode('manual')}>
+                    <ThemedPressable style={styles.button} onPress={handleCurrentLocation}>
+                        {loading ? <ActivityIndicator color={theme.textOnAccent} /> : <Text style={styles.buttonText}>{t("useCurrentLocation")}</Text>}
+                    </ThemedPressable>
+                    <ThemedPressable variant="secondary" style={[styles.button, styles.secondaryButton]} onPress={() => setSelectionMode('manual')}>
                         <Text style={styles.secondaryButtonText}>{t("enterManually")}</Text>
-                    </Pressable>
+                    </ThemedPressable>
                 </View>
             )}
 
@@ -155,12 +159,13 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                     <TextInput
                         style={styles.input}
                         placeholder={t("cityPlaceholder")}
+                        placeholderTextColor={theme.textSecondary}
                         value={searchQuery}
                         onChangeText={handleSearchChange}
                     />
                     {suggestions.map((loc, index) => (
                         <Pressable key={index} style={styles.suggestionItem} onPress={() => handleSuggestionSelect(loc)}>
-                            <Text>{`${loc.city}, ${loc.state}, ${loc.country}`}</Text>
+                            <Text style={{ color: theme.text }}>{`${loc.city}, ${loc.state}, ${loc.country}`}</Text>
                         </Pressable>
                     ))}
                     <Pressable style={styles.cancelButton} onPress={() => setSelectionMode('initial')}>
@@ -178,12 +183,12 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                     {selectedLocation.zipCode && <Text style={styles.confirmDetail}>{t("zipCodeLabel")} {selectedLocation.zipCode}</Text>}
 
                     <View style={styles.confirmActions}>
-                         <Pressable style={[styles.button, styles.secondaryButton, isSmall && styles.confirmActions, {marginRight: 10}]} onPress={() => setSelectionMode('initial')}>
+                         <ThemedPressable variant="secondary" style={[styles.button, styles.secondaryButton, isSmall && styles.confirmActions, {marginRight: 10}]} onPress={() => setSelectionMode('initial')}>
                             <Text style={styles.secondaryButtonText}>{t("back")}</Text>
-                        </Pressable>
-                        <Pressable style={[styles.button, isSmall && styles.confirmActions]} onPress={handleConfirm}>
+                        </ThemedPressable>
+                        <ThemedPressable style={[styles.button, isSmall && styles.confirmActions]} onPress={handleConfirm}>
                             <Text style={styles.buttonText}>{t("confirm")}</Text>
-                        </Pressable>
+                        </ThemedPressable>
                     </View>
                 </View>
             )}
@@ -191,41 +196,41 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
     );
 };
 
-const normalStyles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#fff', justifyContent: 'center' },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
+const normalStyles = (theme: Themes) => StyleSheet.create({
+    container: { flex: 1, padding: 20, backgroundColor: theme.background, justifyContent: 'center' },
+    title: { color: theme.textHeading, fontSize: 24, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
     buttonContainer: { alignItems: 'center' },
-    button: { backgroundColor: '#007BFF', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 8, width: '80%', alignItems: 'center', marginBottom: 15 },
-    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-    secondaryButton: { backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#ccc' },
-    secondaryButtonText: { color: '#333' },
+    button: { backgroundColor: theme.backgroundAccent, paddingVertical: 15, paddingHorizontal: 30, borderRadius: 8, width: '80%', alignItems: 'center', marginBottom: 15 },
+    buttonText: { color: theme.textOnAccent, fontSize: 16, fontWeight: '600' },
+    secondaryButton: { backgroundColor: theme.backgroundSelected, borderWidth: 1, borderColor: theme.border },
+    secondaryButtonText: { color: theme.text },
     searchContainer: { width: '100%' },
-    input: { height: 50, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 15, fontSize: 16, marginBottom: 10 },
-    suggestionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    input: { backgroundColor: theme.backgroundInput, color: theme.text, height: 50, borderWidth: 1, borderColor: theme.border, borderRadius: 8, paddingHorizontal: 15, fontSize: 16, marginBottom: 10 },
+    suggestionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: theme.border },
     cancelButton: { marginTop: 20, alignItems: 'center' },
-    cancelButtonText: { color: '#007BFF', fontSize: 16 },
-    confirmContainer: { backgroundColor: '#f9f9f9', padding: 20, borderRadius: 8, borderWidth: 1, borderColor: '#eee' },
-    confirmTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
-    confirmDetail: { fontSize: 16, marginBottom: 8 },
+    cancelButtonText: { color: theme.backgroundAccent, fontSize: 16 },
+    confirmContainer: { backgroundColor: theme.backgroundSecondary, padding: 20, borderRadius: 8, borderWidth: 1, borderColor: theme.border },
+    confirmTitle: { color: theme.textHeading, fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
+    confirmDetail: { color: theme.text, fontSize: 16, marginBottom: 8 },
     confirmActions: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 }
 });
 
-const smallStyles = StyleSheet.create({
-    container: { padding: 10, backgroundColor: '#fff', justifyContent: 'center' },
-    title: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+const smallStyles = (theme: Themes) => StyleSheet.create({
+    container: { padding: 10, backgroundColor: theme.background, justifyContent: 'center' },
+    title: { color: theme.textHeading, fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
     buttonContainer: { alignItems: 'center' },
-    button: { backgroundColor: '#007BFF', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 6, width: '85%', alignItems: 'center', marginBottom: 10 },
-    buttonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-    secondaryButton: { backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#ccc' },
-    secondaryButtonText: { color: '#333' },
+    button: { backgroundColor: theme.backgroundAccent, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 6, width: '85%', alignItems: 'center', marginBottom: 10 },
+    buttonText: { color: theme.textOnAccent, fontSize: 14, fontWeight: '600' },
+    secondaryButton: { backgroundColor: theme.backgroundSelected, borderWidth: 1, borderColor: theme.border },
+    secondaryButtonText: { color: theme.text },
     searchContainer: { width: '100%' },
-    input: { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 6, paddingHorizontal: 10, fontSize: 14, marginBottom: 8 },
-    suggestionItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    input: { backgroundColor: theme.backgroundInput, color: theme.text, height: 40, borderWidth: 1, borderColor: theme.border, borderRadius: 6, paddingHorizontal: 10, fontSize: 14, marginBottom: 8 },
+    suggestionItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: theme.border },
     cancelButton: { marginTop: 15, alignItems: 'center' },
-    cancelButtonText: { color: '#007BFF', fontSize: 14 },
-    confirmContainer: { backgroundColor: '#f9f9f9', padding: 15, borderRadius: 6, borderWidth: 1, borderColor: '#eee' },
-    confirmTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
-    confirmDetail: { fontSize: 14, marginBottom: 6 },
+    cancelButtonText: { color: theme.backgroundAccent, fontSize: 14 },
+    confirmContainer: { backgroundColor: theme.backgroundSecondary, padding: 15, borderRadius: 6, borderWidth: 1, borderColor: theme.border },
+    confirmTitle: { color: theme.textHeading, fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
+    confirmDetail: { color: theme.text, fontSize: 14, marginBottom: 6 },
     confirmActions: { flexDirection: 'row', justifyContent: 'center', marginTop: 15 },
     confirmActionButton: {
         width: 'auto',

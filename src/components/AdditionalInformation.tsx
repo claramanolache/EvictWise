@@ -1,3 +1,6 @@
+import ThemedPressable from "@/components/ThemedPressable";
+import { useAppColorScheme } from "@/context/ThemeContext";
+import { getTheme } from "@/constants/theme";
 import { useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,6 +13,7 @@ import { useTranslation } from "@/Translation/TranslationContext";
 
 export default function AdditionalInformation({ onView }: { onView: (file: FileData) => void }) {
   const { t } = useTranslation();
+  const theme = getTheme(useAppColorScheme());
   const files = useSelector((state: RootState) => state.app.additionalFiles ?? []);
   const dispatch = useDispatch();
   const busy = useRef(false);
@@ -49,21 +53,21 @@ export default function AdditionalInformation({ onView }: { onView: (file: FileD
   }
 
   return (
-    <View style={{ borderTopWidth: 1, borderTopColor: "#ddd", paddingTop: 16, marginTop: 16, gap: 12 }}>
-      <Text accessibilityRole="header" style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>{t("additionalInformation")}</Text>
-      <Text style={{ color: "#666" }}>{t("additionalInformationHelp")}</Text>
-      <Pressable accessibilityRole="button" disabled={uploading} onPress={upload} style={{ alignSelf: "flex-start", padding: 12, borderRadius: 8, backgroundColor: "#007BFF", opacity: uploading ? 0.6 : 1 }}>
-        <Text style={{ color: "white" }}>{t(uploading ? "documentUploading" : "uploadAdditionalFiles")}</Text>
-      </Pressable>
+    <View style={{ borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 16, marginTop: 16, gap: 12 }}>
+      <Text accessibilityRole="header" style={{ fontSize: 18, fontWeight: "600", color: theme.textHeading }}>{t("additionalInformation")}</Text>
+      <Text style={{ color: theme.textSecondary }}>{t("additionalInformationHelp")}</Text>
+      <ThemedPressable accessibilityRole="button" disabled={uploading} onPress={upload} style={{ alignSelf: "flex-start", padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent, opacity: uploading ? 0.6 : 1 }}>
+        <Text style={{ color: theme.textOnAccent }}>{t(uploading ? "documentUploading" : "uploadAdditionalFiles")}</Text>
+      </ThemedPressable>
       {files.map((file) => (
         <View key={file.originalFileId} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Text style={{ flex: 1, color: "#333" }}>{file.name}</Text>
+          <Text style={{ flex: 1, color: theme.text }}>{file.name}</Text>
           <Pressable accessibilityRole="button" accessibilityLabel={`${t("viewDocument")} ${file.name}`} onPress={() => onView(file)} style={{ padding: 10 }}>
-            <Text style={{ color: "#0056b3", fontWeight: "600" }}>{t("viewDocument")}</Text>
+            <Text style={{ color: theme.text, fontWeight: "600" }}>{t("viewDocument")}</Text>
           </Pressable>
         </View>
       ))}
-      {(pickerFailed || failedNames.length > 0) && <Text accessibilityRole="alert" style={{ color: "#9c163b" }}>
+      {(pickerFailed || failedNames.length > 0) && <Text accessibilityRole="alert" style={{ color: theme.textWarning, backgroundColor: theme.backgroundError, padding: 12, borderRadius: 8 }}>
         {t("additionalFilesFailed")}{failedNames.length > 0 ? `\n${failedNames.join("\n")}` : ""}
       </Text>}
     </View>

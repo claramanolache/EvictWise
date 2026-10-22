@@ -21,6 +21,7 @@ export interface State {
   evictionNotice: FileData | null;
   leaseAgreement: FileData | null;
   events: CalendarEvent[];
+  completedCalendarTasks?: string[];
 
   location: LocationData | null;
 }
@@ -35,6 +36,7 @@ const initialState: State = {
   evictionNotice: null,
   leaseAgreement: null,
   events: [],
+  completedCalendarTasks: [],
 
   location: null,
 };
@@ -43,6 +45,13 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    toggleCalendarTask: (state, action: PayloadAction<string>) => {
+      if (!state.events.some(event => event.id === action.payload)) return;
+      const completed = state.completedCalendarTasks ?? [];
+      state.completedCalendarTasks = completed.includes(action.payload)
+        ? completed.filter(id => id !== action.payload)
+        : [...completed, action.payload];
+    },
     updateUserInfoEdits: (state, action: PayloadAction<ReportEdits>) => {
       state.userInfoEdits = { ...state.userInfoEdits, ...action.payload };
     },
@@ -74,6 +83,7 @@ export const slice = createSlice({
       state.events = state.events.filter(
         (event) => event.id !== action.payload,
       );
+      state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => id !== action.payload);
     },
     clearEventsByType: (
       state,
@@ -82,6 +92,7 @@ export const slice = createSlice({
       state.events = state.events.filter(
         (event) => event.type !== action.payload,
       );
+      state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => state.events.some(event => event.id === id));
     },
     clearEventsByDocument: (
       state,
@@ -90,9 +101,11 @@ export const slice = createSlice({
       state.events = state.events.filter(
         (event) => event.document !== action.payload,
       );
+      state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => state.events.some(event => event.id === id));
     },
     clearEvents: (state) => {
       state.events.splice(0, state.events.length);
+      state.completedCalendarTasks = [];
     },
     setLocation: (state, action: PayloadAction<LocationData>) => {
       state.location = action.payload;
@@ -101,6 +114,7 @@ export const slice = createSlice({
 });
 
 export const {
+  toggleCalendarTask,
   updateUserInfoEdits,
   addAdditionalFile,
   setUserInfoReport,

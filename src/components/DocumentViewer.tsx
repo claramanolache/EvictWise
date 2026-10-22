@@ -1,5 +1,6 @@
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { useEffect, useState } from "react";
-import { Image, Modal, Platform, Pressable, ScrollView, Share, Text, View, useColorScheme } from "react-native";
+import { Image, Modal, Platform, Pressable, ScrollView, Share, Text, View, } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { FileData } from "@/types";
 import { loadOriginalFile } from "@/utils/documentFiles";
@@ -41,7 +42,7 @@ export default function DocumentViewer({ file, onClose }: { file: FileData; onCl
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, padding: 24, paddingTop: 48, backgroundColor: theme.background }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <Text accessibilityRole="header" style={{ flex: 1, color: theme.text, fontSize: 18 }}>{file.name}</Text>
+          <Text accessibilityRole="header" style={{ flex: 1, color: theme.textHeading, fontSize: 18 }}>{file.name}</Text>
           <Pressable accessibilityRole="button" onPress={onClose} style={{ padding: 12 }}>
             <Text style={{ color: theme.text }}>{t("closeDocument")}</Text>
           </Pressable>

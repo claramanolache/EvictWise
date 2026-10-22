@@ -46,7 +46,29 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  priorityChecklist: "Priority checklist",
+  priorityChecklistHelp: "Earliest deadlines first. Check off a task when it is complete; tap again to undo.",
+  priorityChecklistEmpty: "Tasks from your calendar deadlines will appear here when you upload your documents.",
+  checklistDeadline: "Deadline",
+  assistantDisclaimer: "I am not a professional and can make mistakes! Please check in with a licensed professional.",
+  chatSubtitle: "Your housing assistance companion",
+  assistantLabel: "EVICT WISE ASSISTANT",
+  welcomeHeading: "How can I help with your case?",
+  welcomeSubtitle: "Ask questions about your eviction notice, lease agreement, tenant rights, or upcoming deadlines.",
+  suggestNotice: "Understand my eviction notice",
+  suggestRights: "What are my tenant rights?",
+  suggestCourt: "Help me prepare for court",
+  followUpPlaceholder: "Ask a follow-up question...",
+  composerDisclaimer: "Evict Wise can make mistakes. Verify important legal information.",
+  copyResponse: "Copy response",
+  copiedResponse: "Copied",
+  copyFailed: "Could not copy. Please select and copy the response text.",
+
   title: "Messages",
+  lightMode: "Light mode",
+  darkMode: "Dark mode",
+  switchToLightMode: "Switch to light mode",
+  switchToDarkMode: "Switch to dark mode",
   menuChat: "Chat",
   menuDocuments: "Documents",
   menuProfile: "Profile",
@@ -178,7 +200,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v15-${language}`;
+    const cacheKey = `interface-v18-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

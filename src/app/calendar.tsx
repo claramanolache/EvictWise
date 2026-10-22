@@ -1,3 +1,5 @@
+import PriorityChecklist from "@/components/PriorityChecklist";
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { useTranslation } from "@/Translation/TranslationContext";
 import Layout from "@/components/Layout";
 import { getTheme } from "@/constants/theme";
@@ -10,7 +12,6 @@ import {
   View,
   ScrollView,
   SafeAreaView,
-  useColorScheme,
   Pressable,
   Animated,
   Easing,
@@ -20,6 +21,8 @@ import { useSelector } from "react-redux";
 const menuHeight = 400;
 
 export default function Calendar() {
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const wide = availableWidth >= 900;
   const { language, t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
@@ -106,7 +109,7 @@ export default function Calendar() {
         selectedDate && isSameDay(currentCrudeDate, selectedDate);
 
       const backgroundColor = selected
-        ? theme.backgroundAccent + "88"
+        ? theme.backgroundSelected
         : currentDayIndex === 0 || currentDayIndex === 6
           ? theme.backgroundSecondary
           : theme.background;
@@ -239,7 +242,7 @@ export default function Calendar() {
             fontWeight: "600",
             marginBottom: 10,
             paddingLeft: 5,
-            color: theme.text,
+            color: theme.textHeading,
           }}
         >
           {monthName}
@@ -250,7 +253,7 @@ export default function Calendar() {
           style={{
             flexDirection: "row",
             borderBottomWidth: 1,
-            borderBottomColor: theme.backgroundSecondary,
+            borderBottomColor: theme.border,
             paddingBottom: 5,
           }}
         >
@@ -295,6 +298,7 @@ export default function Calendar() {
   return (
     <Layout>
       <SafeAreaView
+        onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)}
         style={{
           flex: 1,
         }}
@@ -305,6 +309,8 @@ export default function Calendar() {
         >
           {t("menuCalendar")}
         </Text>
+        <View style={{ flex: 1, minHeight: 0, flexDirection: wide ? "row" : "column-reverse", gap: 16, paddingHorizontal: 16, paddingBottom: 16 }}>
+        <View style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
         <ScrollView
           ref={scrollViewRef}
           onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
@@ -323,7 +329,7 @@ export default function Calendar() {
             right: 0,
             height: menuHeight,
             backgroundColor: theme.backgroundSecondary,
-            borderTopColor: theme.textSecondary,
+            borderTopColor: theme.border,
             borderTopWidth: 1,
             padding: 32,
             transform: [{ translateY: menuTranslate }],
@@ -408,6 +414,11 @@ export default function Calendar() {
             </View>
           ))}
         </Animated.View>
+        </View>
+        <View style={wide ? { width: 340 } : { height: 240 }}>
+          <PriorityChecklist />
+        </View>
+        </View>
       </SafeAreaView>
     </Layout>
   );

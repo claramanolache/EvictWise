@@ -1,138 +1,104 @@
-import {
-  Text,
-  View,
-  StyleSheet,
-  useColorScheme,
-  Pressable,
-  Animated,
-  Easing,
-} from "react-native";
+import { useAppTheme, useAppColorScheme } from "@/context/ThemeContext";
+import { Text, View, StyleSheet, Switch, Pressable, ScrollView, useWindowDimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { getTheme, Fonts, Spacing } from "@/constants/theme";
-import { ReactNode, useEffect, useRef } from "react";
+import { useRouter, usePathname } from "expo-router";
+import { getTheme, Fonts } from "@/constants/theme";
+import { ReactNode, useState } from "react";
 import { useMenu } from "@/context/MenuContext";
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid";
-
 import { useTranslation } from "@/Translation/TranslationContext";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
 const menuItems = [
-  { label: "menuChat", route: "/" },
-  { label: "menuProfile", route: "/profile" },
-  { label: "menuCalendar", route: "/calendar" },
-  { label: "menuLawyerConnect", route: "/lawyer-connect" },
+  { label: "menuChat", route: "/", icon: "chat" },
+  { label: "menuProfile", route: "/profile", icon: "profile" },
+  { label: "menuCalendar", route: "/calendar", icon: "calendar" },
+  { label: "menuLawyerConnect", route: "/lawyer-connect", icon: "case" },
 ];
 
-export default function Layout({ children }: LayoutProps) {
-  const router = useRouter();
-  const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const theme = getTheme(colorScheme);
-  const { menuOpen, setMenuOpen } = useMenu();
-  const menuTranslate = useRef(new Animated.Value(menuOpen ? 0 : -220)).current;
-
-  useEffect(() => {
-    Animated.timing(menuTranslate, {
-      toValue: menuOpen ? 0 : -220,
-      duration: 250,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  }, [menuOpen, menuTranslate]);
-
-  const handleNavigation = (route: string) => {
-    router.push(route as any);
-    setMenuOpen(false);
-  };
-
-  return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.background }]}
-    >
-      <Animated.View
-        pointerEvents={menuOpen ? "auto" : "none"}
-        style={[
-          styles.sidebar,
-          { backgroundColor: theme.backgroundSecondary },
-          { transform: [{ translateX: menuTranslate }] },
-        ]}
-      >
-        {menuItems.map((item) => (
-          <Pressable
-            key={item.label}
-            style={styles.menuItem}
-            onPress={() => handleNavigation(item.route)}
-          >
-            <Text style={[styles.menuItemText, { color: theme.text }]}>
-              {t(item.label)}
-            </Text>
-          </Pressable>
-        ))}
-      </Animated.View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t(menuOpen ? "closeMenu" : "openMenu")}
-        style={styles.hamburger}
-        onPress={() => setMenuOpen(!menuOpen)}
-      >
-        <FontAwesomeFreeSolid name="navicon" size={18} color={theme.text} />
-      </Pressable>
-
-      <View style={styles.page}>
-        <View style={styles.pageContent}>{children}</View>
+// Small outline icons built from native views work on both mobile and web.
+function NavigationIcon({ kind, color }: { kind: string; color: string }) {
+  return <View accessible={false} style={{ width: 22, height: 22, alignItems: "center", justifyContent: "center" }}>
+    {kind === "profile" ? <>
+      <View style={{ width: 8, height: 8, borderWidth: 1.5, borderColor: color, borderRadius: 5, marginBottom: 2 }} />
+      <View style={{ width: 17, height: 9, borderWidth: 1.5, borderColor: color, borderTopLeftRadius: 9, borderTopRightRadius: 9 }} />
+    </> : <>
+      {kind === "case" && <View style={{ width: 9, height: 4, borderWidth: 1.5, borderColor: color, borderBottomWidth: 0, borderTopLeftRadius: 2, borderTopRightRadius: 2 }} />}
+      <View style={{ width: 19, height: 16, borderWidth: 1.5, borderColor: color, borderRadius: kind === "chat" ? 5 : 3, justifyContent: "center" }}>
+        <View style={{ borderTopWidth: 1.5, borderColor: color, marginHorizontal: kind === "chat" ? 4 : 0, marginTop: kind === "calendar" ? -5 : 0 }} />
       </View>
-    </SafeAreaView>
-  );
+      {kind === "chat" && <View style={{ position: "absolute", bottom: 0, left: 4, height: 5, borderLeftWidth: 1.5, borderColor: color, transform: [{ rotate: "25deg" }] }} />}
+    </>}
+  </View>;
 }
 
+export default function Layout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { width } = useWindowDimensions();
+  const narrow = width < 768;
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const { toggle } = useAppTheme();
+  const { t } = useTranslation();
+  const colorScheme = useAppColorScheme();
+  const theme = getTheme(colorScheme);
+  const { menuOpen, setMenuOpen } = useMenu();
+
+  const sidebar = <View style={[styles.sidebar, { backgroundColor: theme.backgroundSidebar }, narrow && styles.overlay]}>
+    <View style={styles.brand}>
+      <FontAwesomeFreeSolid name="scale-balanced" size={22} color={theme.textSidebar} />
+      <Text style={[styles.brandText, { color: theme.textSidebar }]}>Evict Wise</Text>
+      {narrow && <Pressable accessibilityRole="button" accessibilityLabel={t("closeMenu")} onPress={() => setMenuOpen(false)} style={styles.iconButton}>
+        <FontAwesomeFreeSolid name="xmark" size={18} color={theme.textSidebar} />
+      </Pressable>}
+    </View>
+    <ScrollView contentContainerStyle={{ padding: 12, gap: 6 }}>
+      {menuItems.map(item => {
+        const active = pathname === item.route;
+        const color = active ? theme.textHeading : theme.textSidebar;
+        return <Pressable key={item.route} accessibilityRole="button" accessibilityState={{ selected: active }}
+          onHoverIn={() => setHoveredMenu(item.route)} onHoverOut={() => setHoveredMenu(null)}
+          onPress={() => { router.push(item.route as "/"); if (narrow) setMenuOpen(false); }}
+          style={[styles.menuItem, { backgroundColor: active ? theme.backgroundSelected : hoveredMenu === item.route ? "#253D30" : "transparent" }]}>
+          <NavigationIcon kind={item.icon} color={color} />
+          <Text style={{ color, fontSize: 15, fontWeight: "500", fontFamily: Fonts.sans }}>{t(item.label)}</Text>
+        </Pressable>;
+      })}
+    </ScrollView>
+  </View>;
+
+  return <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+    {menuOpen && !narrow && sidebar}
+    <View style={styles.main}>
+      <View style={[styles.header, { borderBottomColor: theme.border, paddingHorizontal: narrow ? 12 : 24 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t(menuOpen ? "closeMenu" : "openMenu")} accessibilityState={{ expanded: menuOpen }} onPress={() => setMenuOpen(!menuOpen)} style={styles.iconButton}>
+          <FontAwesomeFreeSolid name="bars" size={18} color={theme.textSecondary} />
+        </Pressable>
+        {<View style={[styles.headerIcon, { backgroundColor: theme.backgroundSelected }]}><FontAwesomeFreeSolid name="shield-halved" size={20} color={theme.backgroundAccent} /></View>}
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.brandText, { color: theme.textHeading }]}>Evict Wise</Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 18 }}>{t("chatSubtitle")}</Text>
+        </View>
+        <Switch accessibilityLabel={t("darkMode")} value={colorScheme === "dark"} onValueChange={toggle} trackColor={{ false: theme.border, true: theme.backgroundAccent }} thumbColor="#ffffff" ios_backgroundColor={theme.border} />
+      </View>
+      <View style={styles.main}>{children}</View>
+    </View>
+    {menuOpen && narrow && <>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("closeMenu")} onPress={() => setMenuOpen(false)} style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10 }]} />
+      {sidebar}
+    </>}
+  </SafeAreaView>;
+}
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  hamburger: {
-    position: "absolute",
-    top: 32,
-    left: 0,
-    padding: Spacing.three,
-    zIndex: 2,
-  },
-  sidebar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 220,
-    height: 1000,
-    padding: 0,
-    paddingTop: 48 + 32,
-    zIndex: 1,
-  },
-  menuItem: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-  },
-  menuItemText: {
-    fontSize: 16,
-    fontFamily: Fonts?.sans,
-  },
-  page: {
-    marginTop: 48 + 32,
-    flex: 1,
-    minWidth: 0,
-    maxHeight: "100%",
-    overflow: "hidden",
-  },
-  pageContent: {
-    flex: 1,
-    minWidth: 0,
-  },
+  container: { flex: 1, flexDirection: "row", overflow: "hidden" },
+  main: { flex: 1, minWidth: 0, minHeight: 0 },
+  sidebar: { width: 240, flexShrink: 0 },
+  overlay: { position: "absolute", top: 0, bottom: 0, left: 0, zIndex: 11 },
+  brand: { minHeight: 82, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 10 },
+  brandText: { fontFamily: Fonts.sans, fontSize: 19, fontWeight: "600" },
+  menuItem: { padding: 13, borderRadius: 10, flexDirection: "row", alignItems: "center", gap: 12 },
+  header: { minHeight: 82, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1 },
+  iconButton: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
+  headerIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: "center", alignItems: "center" },
 });

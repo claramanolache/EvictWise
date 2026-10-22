@@ -1,10 +1,12 @@
+import ThemedPressable from "@/components/ThemedPressable";
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import AdditionalInformation from "@/components/AdditionalInformation";
 import CondensedUserInfo from "@/components/CondensedUserInfo";
 import DocumentViewer from "@/components/DocumentViewer";
 import { FileData } from "@/types";
 import { useTranslation } from "@/Translation/TranslationContext";
-import { Text, StyleSheet, useColorScheme, View, Pressable, ScrollView } from "react-native";
-import { getTheme, Fonts, Spacing } from "@/constants/theme";
+import { Text, StyleSheet,  View, Pressable, ScrollView } from "react-native";
+import { getTheme, Fonts, Spacing, Themes } from "@/constants/theme";
 import Layout from "@/components/Layout";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +19,7 @@ export default function ProfilePage() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
+  const styles = createStyles(theme);
   const dispatch = useDispatch();
   const { upload, loading: uploadLoading, failed: uploadFailed, errorKey } = useDocumentUpload();
   const { evictionNotice, leaseAgreement, location } = useSelector((state: RootState) => state.app);
@@ -78,7 +81,7 @@ export default function ProfilePage() {
             }}
             style={{ padding: 10 }}
           >
-            <Text style={{ color: "#0056b3", fontWeight: "600" }}>{t("viewDocument")}</Text>
+            <Text style={{ color: theme.text, fontWeight: "600" }}>{t("viewDocument")}</Text>
           </Pressable>
         )}
         </View>
@@ -95,7 +98,7 @@ export default function ProfilePage() {
     <Layout>
       {viewedFile && <DocumentViewer key={viewedFile.originalFileId || viewedFile.name} file={viewedFile} onClose={() => setViewedFile(null)} />}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: Spacing.four }}>
-      <Text style={[styles.title, { color: theme.text }]}>{t("profileTitle")}</Text>
+      <Text style={[styles.title, { color: theme.textHeading }]}>{t("profileTitle")}</Text>
 
       {isEditing && <Text style={{ color: theme.textSecondary, marginBottom: Spacing.two }}>{t("documentFormats")}</Text>}
       <View style={styles.infoContainer}>
@@ -120,15 +123,15 @@ export default function ProfilePage() {
 
       {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
       {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
-      <Pressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
+      <ThemedPressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
         <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
-      </Pressable>
+      </ThemedPressable>
       </ScrollView>
     </Layout>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Themes) => StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     padding: Spacing.four,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: theme.backgroundSecondary,
     borderRadius: 8,
     marginBottom: Spacing.five,
   },
@@ -149,12 +152,13 @@ const styles = StyleSheet.create({
       marginBottom: Spacing.four,
   },
   infoTitle: {
+    color: theme.textHeading,
     fontSize: 20,
     fontWeight: '600',
     fontFamily: Fonts?.sans,
   },
   editingModeText: {
-      color: '#007BFF',
+      color: theme.backgroundAccent,
       fontWeight: 'bold',
   },
   infoRow: {
@@ -170,12 +174,12 @@ const styles = StyleSheet.create({
   editableRow: {
     borderWidth: 1,
     borderColor: 'transparent', // Invisible border normally to prevent jumping
-    backgroundColor: '#fff',
+    backgroundColor: theme.backgroundSecondary,
     elevation: 1, // small shadow
   },
   hoveredRow: {
-    borderColor: '#007BFF',
-    backgroundColor: '#e6f2ff',
+    borderColor: theme.backgroundAccent,
+    backgroundColor: theme.backgroundSelected,
     cursor: 'pointer',
   },
   infoColumns: {
@@ -193,9 +197,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontSize: 16,
     fontFamily: Fonts?.sans,
-    color: '#666',
+    color: theme.textSecondary,
   },
   infoValue: {
+    color: theme.text,
     fontSize: 16,
     fontFamily: Fonts?.sans,
     fontWeight: '500',
@@ -204,11 +209,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   hoveredText: {
-      color: '#0056b3',
+      color: theme.text,
   },
   editHintText: {
       fontSize: 12,
-      color: '#007BFF',
+      color: theme.backgroundAccent,
       fontStyle: 'italic',
       width: '100%',
       textAlign: 'right',
@@ -218,17 +223,17 @@ const styles = StyleSheet.create({
       marginTop: Spacing.four,
       paddingTop: Spacing.four,
       borderTopWidth: 1,
-      borderTopColor: '#eee',
+      borderTopColor: theme.border,
   },
   editButton: {
-      backgroundColor: '#007BFF',
+      backgroundColor: theme.backgroundAccent,
       paddingVertical: 12,
       borderRadius: 8,
       alignItems: 'center',
       marginTop: Spacing.four,
   },
   editButtonText: {
-      color: 'white',
+      color: theme.textOnAccent,
       fontWeight: 'bold',
       fontSize: 16,
   }

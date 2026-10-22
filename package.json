@@ -56,11 +56,11 @@
   "scripts": {
     "server": "node server/index.js",
     "test:translation": "node --test server/translation.test.cjs",
-    "start": "node_modules/.bin/expo start",
+    "start": "node scripts/start-development.cjs",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "node_modules/.bin/expo run:android",
     "ios": "node_modules/.bin/expo run:ios",
-    "web": "node_modules/.bin/expo start --web",
+    "web": "node scripts/start-development.cjs --web",
     "lint": "node_modules/.bin/expo lint"
   },
   "private": true

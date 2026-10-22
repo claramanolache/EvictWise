@@ -1,9 +1,11 @@
+import ThemedPressable from "@/components/ThemedPressable";
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { updateUserInfoEdits } from "@/slice";
 import { REPORT_FIELDS, readReportFields, ReportValues, ReportEdits } from "@/utils/condensedInfoEdits";
 import { useCondensedInfo } from "@/context/CondensedInfoContext";
-import { Platform, Pressable, Share, Text, TextInput, View, useColorScheme } from "react-native";
+import { Platform, Pressable, Share, Text, TextInput, View, } from "react-native";
 import { getTheme } from "@/constants/theme";
 import { useTranslation } from "@/Translation/TranslationContext";
 
@@ -65,7 +67,7 @@ export default function CondensedUserInfo() {
 
   return (
     <View style={{ gap: 12, padding: 16, borderRadius: 12, backgroundColor: theme.backgroundSecondary }}>
-      <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: "600" }}>{t("condensedUserInfo")}</Text>
+      <Text accessibilityRole="header" style={{ color: theme.textHeading, fontSize: 20, fontWeight: "600" }}>{t("condensedUserInfo")}</Text>
       <Text style={{ color: theme.textSecondary }}>{fileName}</Text>
       <Text style={{ color: theme.textSecondary }}>{t("condensedInfoDescription")}</Text>
       {busy && <Text accessibilityLiveRegion="polite" style={{ color: theme.textSecondary }}>{t("generatingUserInfo")}</Text>}
@@ -81,14 +83,14 @@ export default function CondensedUserInfo() {
                 onChangeText={(value) => setDraft((previous) => previous ? { ...previous, [key]: value } : previous)}
                 multiline
                 textAlignVertical="top"
-                style={{ color: theme.text, backgroundColor: theme.background, borderWidth: 1, borderColor: theme.textSecondary, borderRadius: 8, padding: 12, minHeight: key === "additionalInfo" || key === "deadlines" ? 100 : 48 }}
+                style={{ color: theme.text, backgroundColor: theme.backgroundInput, borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 12, minHeight: key === "additionalInfo" || key === "deadlines" ? 100 : 48 }}
               />
             </View>
           ))}
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <Pressable accessibilityRole="button" onPress={saveEdits} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent }}>
-              <Text style={{ color: theme.text }}>{t("saveCondensedEdits")}</Text>
-            </Pressable>
+            <ThemedPressable accessibilityRole="button" onPress={saveEdits} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent }}>
+              <Text style={{ color: theme.textOnAccent }}>{t("saveCondensedEdits")}</Text>
+            </ThemedPressable>
             <Pressable accessibilityRole="button" onPress={() => { setDraft(null); setBaseline(null); }} style={{ padding: 12 }}>
               <Text style={{ color: theme.text }}>{t("cancel")}</Text>
             </Pressable>
@@ -97,15 +99,15 @@ export default function CondensedUserInfo() {
       ) : currentReport && (
         <>
           <Text selectable style={{ color: theme.text, lineHeight: 24 }}>{currentReport}</Text>
-          <Pressable accessibilityRole="button" onPress={startEditing} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent }}>
-            <Text style={{ color: theme.text }}>{t("editCondensedInfo")}</Text>
-          </Pressable>
+          <ThemedPressable accessibilityRole="button" onPress={startEditing} style={{ padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent }}>
+            <Text style={{ color: theme.textOnAccent }}>{t("editCondensedInfo")}</Text>
+          </ThemedPressable>
         </>
       )}
       {currentReport && !draft && <Pressable accessibilityRole="button" onPress={download} style={{ padding: 12 }}>
         <Text style={{ color: theme.text }}>{t("downloadUserInfo")}</Text>
       </Pressable>}
-      {failed && <Text accessibilityRole="alert" style={{ color: theme.text }}>{t("userInfoFailed")}</Text>}
+      {failed && <Text accessibilityRole="alert" style={{ color: theme.textWarning, backgroundColor: theme.backgroundError, padding: 12, borderRadius: 8 }}>{t("userInfoFailed")}</Text>}
     </View>
   );
 }

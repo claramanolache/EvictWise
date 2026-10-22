@@ -1,3 +1,4 @@
+import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { getTheme, Spacing } from "@/constants/theme";
 import { themeToMarkdown } from "@/md";
 import { useTranslation } from "@/Translation/TranslationContext";
@@ -21,7 +22,6 @@ import {
   Pressable,
   Platform,
   Text,
-  useColorScheme,
   View,
 } from "react-native";
 
@@ -110,48 +110,18 @@ function MessageRenderBase({
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
 
-  return (
-    <View
-      style={[
-        side === "left"
-          ? {
-            alignSelf: "flex-start",
-            marginLeft: Spacing.two,
-          }
-          : {
-            alignSelf: "flex-end",
-            marginRight: Spacing.two,
-          },
-
-        {
-          marginVertical: Spacing.two,
-          paddingHorizontal: Spacing.three,
-          paddingVertical: Spacing.two,
-          borderRadius: 12,
-          maxWidth: "85%",
-        },
-
-        style === "user"
-          ? {
-            backgroundColor:
-            theme.backgroundAccent,
-          }
-          : style === "assistant"
-            ? {
-              backgroundColor:
-              theme.backgroundSecondary,
-            }
-            : style === "error"
-              ? {
-                backgroundColor:
-                theme.backgroundError,
-              }
-              : {},
-      ]}
-    >
+  const assistant = style === "assistant";
+  return <View style={{ flexDirection: "row", gap: 10, alignSelf: side === "right" ? "flex-end" : "flex-start", maxWidth: side === "right" ? "85%" : "92%", minWidth: 0 }}>
+    {assistant && <View style={{ width: 28, height: 28, marginTop: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: theme.backgroundSelected }}>
+      <FontAwesomeFreeSolid name="shield-halved" size={14} color={theme.backgroundAccent} />
+    </View>}
+    <View style={{ flexShrink: 1, minWidth: 0, borderRadius: style === "error" ? 10 : 16, borderBottomRightRadius: style === "user" ? 5 : 16,
+      padding: assistant ? 18 : style === "error" ? 12 : 14, borderWidth: assistant ? 1 : 0, borderColor: theme.border,
+      backgroundColor: style === "user" ? theme.backgroundUserBubble : style === "error" ? theme.backgroundError : theme.backgroundAssistantBubble }}>
+      {style === "error" && <FontAwesomeFreeSolid name="circle-info" size={14} color={theme.textWarning} style={{ marginBottom: 8 }} />}
       {children}
     </View>
-  );
+  </View>;
 }
 
 interface MessageRenderProps {
@@ -193,12 +163,15 @@ export default function MessageRender({
 
   const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
   const translationRequest = useRef(0);
+  const [copyStatus, setCopyStatus] = useState("");
+  const [hoveredAction, setHoveredAction] = useState("");
 
   const content = msg.type === "chat" ? msg.content : null;
 
   useEffect(() => {
     const request = ++translationRequest.current;
     setLanguagePickerVisible(false);
+    setCopyStatus("");
     setTranslatedText("");
     setShowTranslation(false);
     setTranslationError("");
@@ -244,7 +217,7 @@ export default function MessageRender({
       >
         <Text
           style={{
-            color: theme.text,
+            color: theme.textWarning,
           }}
         >
           {msg.error}
@@ -273,47 +246,33 @@ export default function MessageRender({
       >
         {/* Message content */}
         <Markdown
-          style={themeToMarkdown(theme)}
+          style={themeToMarkdown(msg.role === "user" ? { ...theme, text: theme.textUserBubble, textHeading: theme.textUserBubble, textSecondary: theme.textUserBubble } : theme)}
         >
           {displayedContent}
         </Markdown>
 
-        {/* Translation button */}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setLanguagePickerVisible(true)}
-          style={{
-            alignSelf: "flex-start",
-            marginTop: 6,
-            marginBottom: 4,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <FontAwesomeFreeSolid
-              name="language"
-              size={12}
-              color={theme.textSecondary}
-            />
-
-            <Text
-              style={{
-                color: theme.textSecondary,
-                fontSize: 11,
-                fontWeight: "600",
-              }}
-            >
-              {translationLoading
-                ? t("translating")
-                : t("translate")}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 16, marginTop: 6 }}>
+          <Pressable accessibilityRole="button" onPress={() => setLanguagePickerVisible(true)}
+            onHoverIn={() => setHoveredAction("translate")} onHoverOut={() => setHoveredAction("")}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 }}>
+            <FontAwesomeFreeSolid name="language" size={13} color={msg.role === "user" ? theme.textUserBubble : hoveredAction === "translate" ? theme.backgroundAccent : theme.textSecondary} />
+            <Text style={{ color: msg.role === "user" ? theme.textUserBubble : hoveredAction === "translate" ? theme.backgroundAccent : theme.textSecondary, fontSize: 12 }}>
+              {translationLoading ? t("translating") : t("translate")}
             </Text>
-          </View>
-        </Pressable>
+          </Pressable>
+          {msg.role === "assistant" && Platform.OS === "web" && <Pressable accessibilityRole="button"
+            onHoverIn={() => setHoveredAction("copy")} onHoverOut={() => setHoveredAction("")}
+            onPress={async () => {
+              try {
+                await navigator.clipboard.writeText(displayedContent);
+                setCopyStatus("copiedResponse");
+              } catch { setCopyStatus("copyFailed"); }
+            }} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8 }}>
+            <FontAwesomeFreeSolid name="copy" size={12} color={hoveredAction === "copy" ? theme.backgroundAccent : theme.textSecondary} />
+            <Text style={{ color: hoveredAction === "copy" ? theme.backgroundAccent : theme.textSecondary, fontSize: 12 }}>{t(copyStatus === "copiedResponse" ? copyStatus : "copyResponse")}</Text>
+          </Pressable>}
+        </View>
+        {copyStatus === "copyFailed" && <Text accessibilityLiveRegion="polite" style={{ color: theme.textSecondary, fontSize: 12 }}>{t(copyStatus)}</Text>}
 
         {showTranslation && (
           <Pressable
@@ -326,7 +285,7 @@ export default function MessageRender({
             }}
             style={{ alignSelf: "flex-start", paddingVertical: 8 }}
           >
-            <Text style={{ color: theme.textSecondary, fontSize: 11 }}>
+            <Text style={{ color: msg.role === "user" ? theme.textUserBubble : theme.textSecondary, fontSize: 12 }}>
               {t("showOriginal")}
             </Text>
           </Pressable>
@@ -358,7 +317,7 @@ export default function MessageRender({
                 maxHeight: "85%",
               }}
             >
-              <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: "600", marginBottom: 16 }}>
+              <Text accessibilityRole="header" style={{ color: theme.textHeading, fontSize: 20, fontWeight: "600", marginBottom: 16 }}>
                 {t("selectLanguage")}
               </Text>
               <ScrollView>
@@ -389,7 +348,8 @@ export default function MessageRender({
           <Text
             style={{
               color: theme.textSecondary,
-              fontSize: 10,
+              fontSize: 12,
+                lineHeight: 18,
               marginTop: 4,
             }}
           >
@@ -420,13 +380,12 @@ export default function MessageRender({
             <Text
               style={{
                 color: theme.textSecondary,
-                fontSize: 10,
+                fontSize: 12,
+                lineHeight: 18,
                 flexShrink: 1,
               }}
             >
-              I am not a professional and can
-              make mistakes! Please check in
-              with a licensed professional.
+              {t("assistantDisclaimer")}
             </Text>
           </View>
         )}
