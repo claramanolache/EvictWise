@@ -145,7 +145,7 @@ Notification scheduling helpers exist in `src/events/notifications.ts`, but are 
 
 ### Lawyer Connect
 
-Lawyer Connect displays the saved location, links back to Profile for reviewing information, and opens the Legal Services Corporation and American Bar Association legal-help directories. Users contact organizations themselves. This screen does not book appointments, message lawyers, or automatically match a user to an attorney. The local SQLite organization directory described below is not yet connected to this screen.
+Lawyer Connect displays the saved location, links back to Profile for reviewing information, and lists the supplied organizations under **Local legal help**. Users contact organizations themselves. This screen does not book appointments, message lawyers, or automatically match a user to an attorney. The page also displays all six organizations from the SQLite directory in a responsive card grid. Select the **Local legal help** heading to expand or collapse the entire grid; a down/up chevron indicates its state. The section starts collapsed. Expanded cards show contact links, counties, services, representation levels, case stages, addresses, and languages. Descriptions, services, representation levels, case stages, language names, and assistance notes translate into the preferred language; organization names, county names, addresses, and contact destinations stay unchanged. Translation failures show English details with a retry control. Translated text stays in memory and does not alter the database. Missing details are labeled Not provided. Website, phone, and email links open the appropriate browser or device handler.
 
 ## Legal-help organization database
 
@@ -180,7 +180,7 @@ WHERE c.county = 'Santa Clara'
 ORDER BY o.name;
 ```
 
-This is a local directory database, separate from user profile storage. Lawyer Connect currently continues to use its existing external directory links.
+This is a local directory database, separate from user profile storage. The build script also exports `src/data/lawyers.json`, which Lawyer Connect bundles for offline display on web and native without a database server. After editing the seed data, rerun the build script and rebuild/reload the app. Contact links still require the relevant browser/device handler.
 
 ## Data storage and external services
 
@@ -206,7 +206,7 @@ There is no account-based cloud synchronization or application database server f
 | `src/app/index.tsx` | Chat requests, composer, conversation scrolling, and empty state. |
 | `src/app/profile.tsx` | Profile information, upload/view actions, and condensed report placement. |
 | `src/app/calendar.tsx` | Calendar grid, selected-day details, responsive checklist placement. |
-| `src/app/lawyer-connect.tsx` | External legal-help directories. |
+| `src/app/lawyer-connect.tsx` | Local legal-help organization cards from the generated dataset and contact actions. |
 | `src/components/Layout.tsx` | Responsive sidebar, header, and theme toggle. |
 | `src/components/MessageRender.tsx` | Markdown bubbles, translation picker, copy, loading, and disclaimers. |
 | `src/components/PriorityChecklist.tsx` | Checklist UI and completion controls. |

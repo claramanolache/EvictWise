@@ -1,0 +1,191 @@
+[
+  {
+    "id": "bay-area-legal-aid",
+    "name": "Bay Area Legal Aid",
+    "website": "https://baylegal.org/",
+    "phone": "800-551-5554",
+    "email": null,
+    "address": null,
+    "description": "Large regional legal aid organization serving multiple Bay Area counties",
+    "language_assistance_notes": null,
+    "counties": [
+      "Alameda",
+      "Contra Costa",
+      "Marin",
+      "Napa",
+      "San Francisco",
+      "San Mateo",
+      "Santa Clara"
+    ],
+    "services": [
+      "eviction defense",
+      "housing law",
+      "legal advice",
+      "limited representation"
+    ],
+    "representationLevels": [
+      "advice",
+      "full representation",
+      "limited representation"
+    ],
+    "caseStages": [
+      "lawsuit filed",
+      "notice received",
+      "trial"
+    ],
+    "languages": []
+  },
+  {
+    "id": "clsepa",
+    "name": "Community Legal Services East Palo Alto",
+    "website": "https://clsepa.org/",
+    "phone": "650 326-6440",
+    "email": null,
+    "address": "1861 Bay Rd. East Palo Alto, CA 94303",
+    "description": "Important provider for East Palo Alto and surrounding communities",
+    "language_assistance_notes": null,
+    "counties": [
+      "San Mateo",
+      "Santa Clara"
+    ],
+    "services": [
+      "community advocacy",
+      "eviction defense",
+      "housing law",
+      "tenant counseling"
+    ],
+    "representationLevels": [
+      "advice",
+      "full representation",
+      "limited representation"
+    ],
+    "caseStages": [
+      "lawsuit filed",
+      "notice received",
+      "trial"
+    ],
+    "languages": []
+  },
+  {
+    "id": "eviction-defense-collaborative",
+    "name": "Eviction Defense Collaborative",
+    "website": "https://evictiondefense.org/",
+    "phone": "(415) 947-0797",
+    "email": "legal@evictiondefense.org",
+    "address": "976 Mission St. San Francisco, CA 94103",
+    "description": "Major provider of San Francisco tenant defense services",
+    "language_assistance_notes": null,
+    "counties": [
+      "San Francisco"
+    ],
+    "services": [
+      "emergency assistance",
+      "eviction defense",
+      "full representation",
+      "tenant counseling"
+    ],
+    "representationLevels": [
+      "advice",
+      "full representation"
+    ],
+    "caseStages": [
+      "lawsuit filed",
+      "notice received",
+      "trial"
+    ],
+    "languages": []
+  },
+  {
+    "id": "law-foundation-silicon-valley",
+    "name": "Law Foundation of Silicon Valley",
+    "website": "https://www.lawfoundation.org/",
+    "phone": "(408) 293-4790",
+    "email": null,
+    "address": "4 North Second Street, Suite 1300, San Jose, CA 95113",
+    "description": "Primary eviction-defense provider for Santa Clara County",
+    "language_assistance_notes": "Other, unlisted languages also offered",
+    "counties": [
+      "Santa Clara"
+    ],
+    "services": [
+      "eviction defense",
+      "full representation",
+      "housing law",
+      "legal advice"
+    ],
+    "representationLevels": [
+      "advice",
+      "full representation"
+    ],
+    "caseStages": [
+      "lawsuit filed",
+      "notice received",
+      "trial"
+    ],
+    "languages": [
+      "English",
+      "Spanish",
+      "Vietnamese"
+    ]
+  },
+  {
+    "id": "legal-aid-san-mateo",
+    "name": "Legal Aid Society of San Mateo County",
+    "website": "https://www.legalaidsmc.org/",
+    "phone": "(650) 558-0915",
+    "email": null,
+    "address": "330 Twin Dolphin Drive, Suite 123, Redwood City, CA 94065",
+    "description": "Primary legal aid organization for San Mateo County residents",
+    "language_assistance_notes": null,
+    "counties": [
+      "San Mateo"
+    ],
+    "services": [
+      "housing law",
+      "legal advice",
+      "tenant counseling"
+    ],
+    "representationLevels": [
+      "advice",
+      "limited representation"
+    ],
+    "caseStages": [
+      "lawsuit filed",
+      "notice received"
+    ],
+    "languages": []
+  },
+  {
+    "id": "project-sentinel",
+    "name": "Project Sentinel",
+    "website": "https://www.housing.org/contact",
+    "phone": "(800) 339-6043",
+    "email": "info@housing.org",
+    "address": "1490 El Camino Real, Santa Clara, CA 95050",
+    "description": "Provides counseling and fair housing services",
+    "language_assistance_notes": "Offers other language assistance through Language Services Associates",
+    "counties": [
+      "Sacramento",
+      "San Mateo",
+      "Santa Clara",
+      "Stanislaus"
+    ],
+    "services": [
+      "fair housing",
+      "mediation",
+      "tenant counseling"
+    ],
+    "representationLevels": [
+      "advice",
+      "limited representation"
+    ],
+    "caseStages": [
+      "court papers filed",
+      "notice received"
+    ],
+    "languages": [
+      "English",
+      "Spanish"
+    ]
+  }
+]

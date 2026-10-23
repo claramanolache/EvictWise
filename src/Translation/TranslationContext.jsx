@@ -49,6 +49,21 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  lawyerShowDetails: "Show details",
+  lawyerHideDetails: "Hide details",
+  lawyerTranslationFailed: "Could not translate organization details. Showing English; you can retry.",
+  lawyerOrganizations: "Local legal help",
+  lawyerCounties: "Counties served",
+  lawyerServices: "Services",
+  lawyerRepresentation: "Representation level",
+  lawyerCaseStages: "Case stages",
+  lawyerAddress: "Address",
+  lawyerLanguages: "Languages",
+  lawyerWebsite: "Website",
+  lawyerPhone: "Phone",
+  lawyerEmail: "Email",
+  lawyerNotProvided: "Not provided",
+  lawyerContactFailed: "Could not open this contact link. Please try again.",
   condensedEnglishEdits: "Editing the English source. Changes entered in another language are translated to English before saving. Downloads are always in English.",
   condensedSaving: "Saving in English...",
   condensedSaveFailed: "Could not save changes in English. Your draft is still here; please try again.",
@@ -83,7 +98,7 @@ const ENGLISH_INTERFACE = {
   menuProfile: "Profile",
   menuCalendar: "Calendar",
   menuLawyerConnect: "Lawyer Connect",
-  lawyerConnectDescription: "Find legal help through these U.S. directories. Choose an organization serving your location and contact it directly.",
+  lawyerConnectDescription: "Browse the supplied legal-help organizations below. Review their counties, services, and contact information. Contact an organization directly to confirm availability.",
   lawyerLegalAidDescription: "Search by city or address for a legal aid organization that helps with civil legal problems.",
   lawyerReferralDescription: "Explore lawyer referral services, free legal help, and state lawyer licensing resources.",
   lawyerReviewProfile: "Review your profile and condensed information",
@@ -214,7 +229,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v20-${language}`;
+    const cacheKey = `interface-v23-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
