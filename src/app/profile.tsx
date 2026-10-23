@@ -1,3 +1,4 @@
+import { TourTarget } from "@/context/GuidedTourContext";
 import { useAuth } from "@/context/AuthContext";
 import { LANGUAGES } from "@/Translation/languages";
 import ThemedPressable from "@/components/ThemedPressable";
@@ -10,7 +11,7 @@ import { useTranslation } from "@/Translation/TranslationContext";
 import { Text, StyleSheet,  View, Pressable, ScrollView } from "react-native";
 import { getTheme, Fonts, Spacing, Themes } from "@/constants/theme";
 import Layout from "@/components/Layout";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
@@ -18,6 +19,7 @@ import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
+  const profileScroll = useRef<ScrollView>(null);
   const { user, logout } = useAuth();
   const [logoutFailed, setLogoutFailed] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -102,7 +104,7 @@ export default function ProfilePage() {
   return (
     <Layout>
       {viewedFile && <DocumentViewer key={viewedFile.originalFileId || viewedFile.name} file={viewedFile} onClose={() => setViewedFile(null)} />}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: Spacing.four }}>
+      <ScrollView ref={profileScroll} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: Spacing.four }}>
       <Text style={[styles.title, { color: theme.textHeading }]}>{t("profileTitle")}</Text>
 
       {isEditing && <Text style={{ color: theme.textSecondary, marginBottom: Spacing.two }}>{t("documentFormats")}</Text>}
@@ -134,9 +136,11 @@ export default function ProfilePage() {
 
       {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
       {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
+      <TourTarget name="upload" reveal={y => profileScroll.current?.scrollTo({ y: Math.max(0, y - 120), animated: false })}>
       <ThemedPressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
         <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : evictionNotice && leaseAgreement ? "editInformation" : "uploadInformationToBegin")}</Text>
       </ThemedPressable>
+      </TourTarget>
       {evictionNotice && leaseAgreement ? <CondensedUserInfo /> : null}
       <Pressable accessibilityRole="button" disabled={loggingOut} onPress={async () => {
         setLoggingOut(true); setLogoutFailed(false);

@@ -78,6 +78,7 @@ test('route guards expose welcome to guests and Profile as the authenticated lan
     '@/context/AuthContext': { AuthProvider: 'AuthProvider', useAuth: () => ({ user, status: 'ready' }) },
     '@/context/CondensedInfoContext': { CondensedInfoProvider: 'CondensedInfoProvider' },
     '@/context/MenuContext': { MenuProvider: 'MenuProvider' },
+    '@/context/GuidedTourContext': { GuidedTourProvider: 'GuidedTourProvider' },
     '@/Translation/TranslationContext': { TranslationProvider: 'TranslationProvider' },
     '@/constants/theme': { getTheme: () => ({}) }, '@/slice': {},
     '@/store': { createAppStore: () => ({ store: {}, persistor: {} }) },

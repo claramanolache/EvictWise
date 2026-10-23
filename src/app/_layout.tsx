@@ -1,3 +1,4 @@
+import { GuidedTourProvider } from "@/context/GuidedTourContext";
 import { ThemeProvider, useAppColorScheme } from "@/context/ThemeContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { CondensedInfoProvider } from "@/context/CondensedInfoContext";
@@ -30,7 +31,7 @@ function Routes() {
       <Stack.Screen name="calendar" /><Stack.Screen name="lawyer-connect" />
     </Stack.Protected>
   </Stack>;
-  return <MenuProvider>{user ? <CondensedInfoProvider>{stack}</CondensedInfoProvider> : stack}</MenuProvider>;
+  return <MenuProvider>{user ? <GuidedTourProvider><CondensedInfoProvider>{stack}</CondensedInfoProvider></GuidedTourProvider> : stack}</MenuProvider>;
 }
 function AccountApp() {
   const { user } = useAuth();

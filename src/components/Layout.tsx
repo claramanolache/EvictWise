@@ -1,3 +1,4 @@
+import { TourTarget } from "@/context/GuidedTourContext";
 import { useAppTheme, useAppColorScheme } from "@/context/ThemeContext";
 import { Text, View, StyleSheet, Switch, Pressable, ScrollView, useWindowDimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -56,13 +57,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       {menuItems.map(item => {
         const active = pathname === item.route;
         const color = active ? theme.textHeading : theme.textSidebar;
-        return <Pressable key={item.route} accessibilityRole="button" accessibilityState={{ selected: active }}
+        return <TourTarget key={item.route} name={item.label}><Pressable accessibilityRole="button" accessibilityState={{ selected: active }}
           onHoverIn={() => setHoveredMenu(item.route)} onHoverOut={() => setHoveredMenu(null)}
           onPress={() => { router.push(item.route as "/"); if (narrow) setMenuOpen(false); }}
           style={[styles.menuItem, { backgroundColor: active ? theme.backgroundSelected : hoveredMenu === item.route ? "#253D30" : "transparent" }]}>
           <NavigationIcon kind={item.icon} color={color} />
           <Text style={{ color, fontSize: 15, fontWeight: "500", fontFamily: Fonts.sans }}>{t(item.label)}</Text>
-        </Pressable>;
+        </Pressable></TourTarget>;
       })}
     </ScrollView>
   </View>;
@@ -72,9 +73,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     {menuOpen && !narrow && sidebar}
     <View style={styles.main}>
       <View style={[styles.header, { borderBottomColor: theme.border, paddingHorizontal: narrow ? 12 : 24 }]}>
+        <TourTarget name="menu">
         <Pressable accessibilityRole="button" accessibilityLabel={t(menuOpen ? "closeMenu" : "openMenu")} accessibilityState={{ expanded: menuOpen }} onPress={() => setMenuOpen(!menuOpen)} style={styles.iconButton}>
           <FontAwesomeFreeSolid name="bars" size={18} color={theme.textSecondary} />
         </Pressable>
+        </TourTarget>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.brandText, { color: theme.textHeading }]}>Evict Wise</Text>
           <Text style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 18 }}>{t("chatSubtitle")}</Text>
