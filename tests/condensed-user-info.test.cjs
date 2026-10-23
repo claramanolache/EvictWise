@@ -9,9 +9,9 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname, '../s
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: output });
 
-test('missing fields follow the requested five-line format without inventing facts', () => {
+test('missing fields follow the report format without inventing facts', () => {
   assert.equal(output.formatUserInfo({ userName: '', housingLocationType: '', evictionReason: '' }, null, []),
-    'User Name: Not provided\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n\nAdditional Info (from chatbox conversation)\nNo case-relevant chat information provided yet.\n');
+    'User Name: Not provided\nPreferred Language: English\nLocation: Not provided\nHousing Location/Type: Not provided\nDeadlines: Not provided\nLegal reason for eviction: Not provided\n\nAdditional Info (from chatbox conversation)\nNo case-relevant chat information provided yet.\n');
 });
 test('includes location, extracted details and chronological deadlines without mutating stored events', () => {
   const events = [
@@ -57,4 +57,11 @@ test('parser drops AI assessment fields from model output', () => {
   const details = output.parseUserInfoDetails(JSON.stringify({ userName: '', housingLocationType: '', evictionReason: '', chatHighlights: [{ userDetail: 'Has payment receipts.', aiAssessment: 'Could help.' }] }));
   assert.equal(details.chatHighlights[0].aiAssessment, undefined);
   assert.equal(details.chatHighlights[0].userDetail, 'Has payment receipts.');
+});
+
+
+test('preferred language is written in English and changes with the profile preference', () => {
+  const details = { userName: 'Jane', housingLocationType: '', evictionReason: '' };
+  assert.match(output.formatUserInfo(details, null, [], 'es'), /Preferred Language: Spanish\n/);
+  assert.match(output.formatUserInfo(details, null, [], 'ro'), /Preferred Language: Romanian\n/);
 });

@@ -1,3 +1,6 @@
+import { useDispatch, useSelector } from "react-redux";
+import { setPreferredLanguage } from "@/slice";
+import { LANGUAGES } from "./languages";
 import {
   createContext,
   useCallback,
@@ -46,6 +49,12 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  condensedEnglishEdits: "Editing the English source. Changes entered in another language are translated to English before saving. Downloads are always in English.",
+  condensedSaving: "Saving in English...",
+  condensedSaveFailed: "Could not save changes in English. Your draft is still here; please try again.",
+  condensedTranslationFailed: "Could not translate the report. Showing the English version. The English download is still available.",
+  retryTranslation: "Retry translation",
+  preferredLanguage: "Preferred language",
   priorityChecklist: "Priority checklist",
   priorityChecklistHelp: "Earliest deadlines first. Check off a task when it is complete; tap again to undo.",
   priorityChecklistEmpty: "Tasks from your calendar deadlines will appear here when you upload your documents.",
@@ -157,16 +166,25 @@ const ENGLISH_INTERFACE = {
 };
 
 export function TranslationProvider({ children }) {
-  const [conversationTranslation, setConversationTranslation] = useState(
-    /** @type {{ language: string } | null} */ (null),
+  const dispatch = useDispatch();
+  const savedLanguage = useSelector(state => state.app.preferredLanguage);
+  const supported = code => LANGUAGES.some(item => item.code === code);
+  const [legacyLanguage] = useState(() => readStorage("preferred-language"));
+  const preference = supported(savedLanguage) ? savedLanguage
+    : supported(legacyLanguage) ? legacyLanguage : null;
+  const language = preference || ORIGINAL_LANGUAGE;
+  const [selection, setSelection] = useState(0);
+  const conversationTranslation = useMemo(
+    () => preference ? { language } : null,
+    [preference, language, selection],
   );
 
-  const [language, setLanguageState] = useState(() => {
-    return (
-      readStorage("preferred-language") ||
-      ORIGINAL_LANGUAGE
-    );
-  });
+  // Migrate the previous browser-only preference into the persisted profile.
+  useEffect(() => {
+    if (preference && savedLanguage !== preference) {
+      dispatch(setPreferredLanguage(preference));
+    }
+  }, [dispatch, preference, savedLanguage]);
 
   const [interfaceText, setInterfaceText] = useState(
     ENGLISH_INTERFACE
@@ -176,18 +194,14 @@ export function TranslationProvider({ children }) {
     useState(false);
 
   const setLanguage = useCallback((nextLanguage) => {
-    setLanguageState(nextLanguage);
-    writeStorage(
-      "preferred-language",
-      nextLanguage
-    );
-  }, []);
+    if (!LANGUAGES.some(item => item.code === nextLanguage)) return;
+    dispatch(setPreferredLanguage(nextLanguage));
+    writeStorage("preferred-language", nextLanguage);
+    // A fresh selection lets users retry even when the language is unchanged.
+    setSelection(value => value + 1);
+  }, [dispatch]);
 
-  const translateConversation = useCallback((nextLanguage) => {
-    setLanguage(nextLanguage);
-    // A fresh selection also lets users retry the same language after a failure.
-    setConversationTranslation({ language: nextLanguage });
-  }, [setLanguage]);
+  const translateConversation = setLanguage;
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -200,7 +214,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v18-${language}`;
+    const cacheKey = `interface-v20-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

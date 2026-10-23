@@ -1,3 +1,4 @@
+import { englishReport } from "@/utils/reportTranslation";
 import { applyReportEdits } from "@/utils/condensedInfoEdits";
 import { condensedInfoPrompt } from "@/constants/assistantAI/prompt";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
@@ -18,9 +19,10 @@ const CondensedInfoContext = createContext<CondensedInfoContextValue | null>(nul
 // Keep report generation mounted while the user is chatting or editing any screen.
 export function CondensedInfoProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
-  const { messages, location, events, evictionNotice, leaseAgreement, additionalFiles, userInfoEdits, userInfoReport: report } = useSelector((state: RootState) => state.app);
+  const { messages, preferredLanguage, location, events, evictionNotice, leaseAgreement, additionalFiles, userInfoEdits, userInfoReport: report } = useSelector((state: RootState) => state.app);
   const source = JSON.stringify({
-    reportVersion: 4,
+    reportVersion: 6,
+    preferredLanguage: preferredLanguage || "en",
     location, events,
     additionalFiles: (additionalFiles ?? []).map(({ name, markdown, originalFileId }) => ({ name, markdown, originalFileId })),
     evictionNotice: evictionNotice?.markdown || "",
@@ -64,8 +66,11 @@ export function CondensedInfoProvider({ children }: { children: ReactNode }) {
         if (response.choices[0]?.finish_reason !== "stop") throw new Error("Incomplete summary");
         details = parseUserInfoDetails(response.choices[0]?.message?.content || "");
       }
+      if (request !== requestId.current || latestSource.current !== source || abortController.signal.aborted) return;
+      const formatted = formatUserInfo(details, snapshot.location, snapshot.events, snapshot.preferredLanguage);
+      const text = hasSources || snapshot.location ? await englishReport(formatted) : formatted;
       if (request === requestId.current && latestSource.current === source && !abortController.signal.aborted) {
-        dispatch(setUserInfoReport({ source, text: formatUserInfo(details, snapshot.location, snapshot.events) }));
+        dispatch(setUserInfoReport({ source, text }));
       }
     } catch {
       if (request === requestId.current && !abortController.signal.aborted) setFailed(true);

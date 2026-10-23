@@ -1,5 +1,6 @@
 export const REPORT_FIELDS = [
   { key: "userName", label: "User Name:", translation: "condensedName" },
+  { key: "preferredLanguage", label: "Preferred Language:", translation: "preferredLanguage" },
   { key: "location", label: "Location:", translation: "locationLabel" },
   { key: "housing", label: "Housing Location/Type:", translation: "condensedHousing" },
   { key: "deadlines", label: "Deadlines:", translation: "condensedDeadlines" },

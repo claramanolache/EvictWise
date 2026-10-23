@@ -13,6 +13,7 @@ export interface LocationData {
 
 export interface State {
   firstTime: boolean;
+  preferredLanguage?: string;
   userInfoEdits?: ReportEdits;
   userInfoReport?: { source: string; text: string } | null;
   messages: Message[];
@@ -45,6 +46,9 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    setPreferredLanguage: (state, action: PayloadAction<string>) => {
+      state.preferredLanguage = action.payload;
+    },
     toggleCalendarTask: (state, action: PayloadAction<string>) => {
       if (!state.events.some(event => event.id === action.payload)) return;
       const completed = state.completedCalendarTasks ?? [];
@@ -114,6 +118,7 @@ export const slice = createSlice({
 });
 
 export const {
+  setPreferredLanguage,
   toggleCalendarTask,
   updateUserInfoEdits,
   addAdditionalFile,

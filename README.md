@@ -79,7 +79,7 @@ Supported choices are English, Spanish, French, German, Italian, Portuguese, Rom
 
 The client posts to `/api/translate` on the Express service, which calls Google Cloud Translation with server-side credentials. Interface strings are translated in a batch and cached by language and interface version. Failed interface requests fall back to English. Message failures keep the original content and show a translation error.
 
-Language preference and interface caches are saved when browser storage is available. The conversation translation selection itself is in memory and must be selected again after a reload. Stored documents, extracted task names, and the condensed report body are not automatically rewritten into the selected language.
+Selecting a translation language saves it as **Preferred language** in the user profile, displayed under Your Information. On reload, the saved language applies to the interface and conversation automatically. Existing browser-only language preferences are migrated into the profile. Selecting Translate still opens the language picker each time. Interface caches are saved when browser storage is available. Stored documents and extracted task names are not automatically rewritten into the selected language. The condensed report is displayed in the preferred language, while its saved source and download remain English.
 
 ### Profile and document uploads
 
@@ -107,6 +107,7 @@ The separate **Condensed user info** box below Your Information contains a downl
 
 ```text
 User Name:
+Preferred Language:
 Location:
 Housing Location/Type:
 Deadlines:
@@ -115,13 +116,17 @@ Legal reason for eviction:
 Additional Info (from chatbox conversation)
 ```
 
-`CondensedInfoProvider` stays mounted across screens. It watches location, document text, deadlines, additional-file metadata/text, and conversation changes. Updates are debounced by 400 ms. It reuses a report whose source matches the current data and cancels obsolete requests so older results cannot overwrite newer information.
+The Preferred Language field follows the profile selection automatically and is read-only in the report editor. The English download uses the English language name (for example, Spanish); the on-screen report still uses the preferred display language.
 
-When source material exists, OpenAI extracts structured details, which are validated and formatted into the report. Missing fields are marked `Not provided`; deadlines are sorted by date. There is no manual refresh button.
+`CondensedInfoProvider` stays mounted across screens. It watches preferred language, location, document text, deadlines, additional-file metadata/text, and conversation changes. Updates are debounced by 400 ms. It reuses a report whose source matches the current data and cancels obsolete requests so older results cannot overwrite newer information.
+
+When source material exists, OpenAI extracts structured details in English, which are validated and formatted into the report. Report field values are normalized to English through the translation service before saving; English field labels and personal names are preserved. This step also covers deadlines extracted from non-English documents. Missing fields are marked `Not provided`; deadlines are sorted by date. There is no manual refresh button.
 
 The chat subtitle contains concise, case-relevant details or evidence reported by the user. The prompt asks the model to avoid repeating document/profile information, general conversation, and an AI legal assessment. Entries are attributed as `User reports`; the app does not independently verify them. Whole eviction notices, leases, and an AI assessment are not appended as separate report sections.
 
-Use **Edit information** to change report fields, then **Save changes**. Only changed fields become saved overrides. Overrides survive automatic regeneration, while untouched fields continue to update from the source data. These edits affect the report only: they do not edit source documents, change calendar deadlines, or replace the profile context sent to chat. Download/share uses the current report with overrides applied.
+Use **Edit information** to change report fields, then **Save changes**. Only changed fields become saved overrides. Overrides survive automatic regeneration, while untouched fields continue to update from the source data. These edits affect the report only: they do not edit source documents, change calendar deadlines, or replace the profile context sent to chat. The editor opens the English source. If edits are entered in another language, changed field values are translated to English before saving; a translation failure keeps the draft available for retry. Download/share always uses the English report with saved overrides applied.
+
+For display, the report is translated into the preferred language in component memory only. It updates when the report or preference changes, and outdated translation responses are discarded. While translation runs, a loading message is shown. If it fails, the English report is displayed with a retry control; the English download remains available. Display translations never replace the stored report.
 
 ### Calendar and priority checklist
 
@@ -146,13 +151,13 @@ Lawyer Connect displays the saved location, links back to Profile for reviewing 
 
 | Data | Current storage/flow |
 | --- | --- |
-| Chat, location, document metadata/extracted text, deadlines, additional-file metadata, report, report overrides, checklist completion | Redux state persisted through `redux-persist/lib/storage` on web, under `persist:app` in localStorage. |
+| Chat, location, document metadata/extracted text, deadlines, additional-file metadata, report, report overrides, checklist completion, preferred language | Redux state persisted through `redux-persist/lib/storage` on web, under `persist:app` in localStorage. |
 | Original uploaded files on web | IndexedDB database `evictwise-documents`, object store `files`. Redux stores the file identifier. |
 | Original uploaded files on native | Copied into the application's documents directory through Expo FileSystem. |
 | Theme and language preferences | Browser localStorage when available (`preferred-theme`, `preferred-language`). |
 | Translated interface strings | Versioned per-language localStorage entries; message translations remain component state. |
 | Chat, document image transcription, deadline extraction, report generation | Sent to OpenAI from the client as needed. |
-| Translation text and interface strings | Sent through the Express API to Google Cloud Translation. |
+| Translation text, interface strings, and condensed report display/English normalization | Sent through the Express API to Google Cloud Translation. |
 
 There is no account-based cloud synchronization or application database server for user profiles. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native metadata persistence is not configured with an AsyncStorage adapter; the existing Redux persistence adapter targets web storage, so cross-launch native persistence should not be assumed.
 

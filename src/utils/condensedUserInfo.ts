@@ -24,7 +24,12 @@ export function formatUserInfo(
   details: UserInfoDetails,
   location: LocationData | null,
   events: CalendarEvent[],
+  preferredLanguage = "en",
 ): string {
+  const languageNames: Record<string, string> = {
+    en: "English", es: "Spanish", fr: "French", de: "German", it: "Italian",
+    pt: "Portuguese", ro: "Romanian", ja: "Japanese", ko: "Korean", "zh-CN": "Simplified Chinese",
+  };
   const text = (value: string) => value.trim() || "Not provided";
   const deadlines = [...events].sort((a, b) =>
     a.date[0] - b.date[0] || a.date[1] - b.date[1] || a.date[2] - b.date[2],
@@ -36,6 +41,7 @@ export function formatUserInfo(
   });
   return [
     `User Name: ${text(details.userName)}`,
+    `Preferred Language: ${languageNames[preferredLanguage] || "English"}`,
     `Location: ${location ? text([location.city, location.state, location.country, location.zipCode].filter(Boolean).join(", ")) : "Not provided"}`,
     `Housing Location/Type: ${text(details.housingLocationType)}`,
     `Deadlines:${deadlines.length ? "\n" + deadlines.join("\n") : " Not provided"}`,

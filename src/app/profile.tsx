@@ -1,3 +1,4 @@
+import { LANGUAGES } from "@/Translation/languages";
 import ThemedPressable from "@/components/ThemedPressable";
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import AdditionalInformation from "@/components/AdditionalInformation";
@@ -16,7 +17,7 @@ import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
   const styles = createStyles(theme);
@@ -116,6 +117,10 @@ export default function ProfilePage() {
                  <LocationSelection size="small" onSaveSuccess={handleLocationSave} />
              </View>
         )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>{t("preferredLanguage")}</Text>
+          <Text style={styles.infoValue}>{LANGUAGES.find(item => item.code === language)?.name || language}</Text>
+        </View>
         <AdditionalInformation onView={setViewedFile} />
       </View>
 

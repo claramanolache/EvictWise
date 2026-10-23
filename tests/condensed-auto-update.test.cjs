@@ -26,6 +26,7 @@ function setup() {
     },
   };
   const mocks = {
+    "@/utils/reportTranslation": { englishReport: async text => text },
     react: hooks,
     'react-native': { Platform: { OS: 'web' }, useColorScheme: () => 'light' },
     'react-redux': { useDispatch: () => dispatch, useSelector: fn => fn({ app: state }) },
