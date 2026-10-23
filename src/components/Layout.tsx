@@ -75,7 +75,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         <Pressable accessibilityRole="button" accessibilityLabel={t(menuOpen ? "closeMenu" : "openMenu")} accessibilityState={{ expanded: menuOpen }} onPress={() => setMenuOpen(!menuOpen)} style={styles.iconButton}>
           <FontAwesomeFreeSolid name="bars" size={18} color={theme.textSecondary} />
         </Pressable>
-        {<View style={[styles.headerIcon, { backgroundColor: theme.backgroundSelected }]}><FontAwesomeFreeSolid name="shield-halved" size={20} color={theme.backgroundAccent} /></View>}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.brandText, { color: theme.textHeading }]}>Evict Wise</Text>
           <Text style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 18 }}>{t("chatSubtitle")}</Text>
@@ -100,5 +99,4 @@ const styles = StyleSheet.create({
   menuItem: { padding: 13, borderRadius: 10, flexDirection: "row", alignItems: "center", gap: 12 },
   header: { minHeight: 82, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1 },
   iconButton: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
-  headerIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: "center", alignItems: "center" },
 });
