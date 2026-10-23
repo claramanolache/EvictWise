@@ -15,6 +15,18 @@ async function isTranslationApiReady(url) {
   }
 }
 
+async function isAccountApiReady(url) {
+  try {
+    const response = await fetch(`${url.replace(/\/$/, '')}/api/auth/session`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    const data = await response.json();
+    // A signed-out response proves the auth routes and private database work.
+    return (response.status === 401 && data.error === 'authSignInRequired') ||
+      (response.ok && typeof data.user?.id === 'string');
+  } catch { return false; }
+}
+
 async function main() {
   // Match Expo's development env precedence without printing credentials.
   const dotenv = require('dotenv');
@@ -61,6 +73,9 @@ async function main() {
         await delay(150);
       }
     }
+    if (!stopping && !(await isAccountApiReady(process.env.EXPO_PUBLIC_AUTH_API_URL || apiUrl))) {
+      throw new Error('The account API is unavailable or outdated. Restart the API with npm run server and check EXPO_PUBLIC_AUTH_API_URL. A translation-only server cannot support sign-in.');
+    }
     if (!stopping) {
       launch([require.resolve('expo/bin/cli'), 'start', ...process.argv.slice(2)]);
     }
@@ -71,4 +86,4 @@ async function main() {
 }
 
 if (require.main === module) void main();
-module.exports = { isTranslationApiReady, main };
+module.exports = { isTranslationApiReady, isAccountApiReady, main };

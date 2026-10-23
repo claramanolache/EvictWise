@@ -143,3 +143,6 @@ expo-env.d.ts
 # @end expo-cli
 .expo/
 ios
+
+# Private account hashes, session records, and database journals
+server/private/

@@ -6,7 +6,7 @@ The assistant provides legal information and can make mistakes. Verify extracted
 
 ## Run locally
 
-Use a Node.js version compatible with the Expo SDK in `package.json`, npm, an OpenAI API key, and a Google Cloud project configured for Cloud Translation with Application Default Credentials.
+Use Node.js 22.13 or newer (the account service uses built-in `node:sqlite`), npm, an OpenAI API key, and a Google Cloud project configured for Cloud Translation with Application Default Credentials.
 
 1. Install dependencies from the project root:
 
@@ -38,7 +38,7 @@ Use a Node.js version compatible with the Expo SDK in `package.json`, npm, an Op
    npm run web
    ```
 
-   Alternatively, `npm start` opens the Expo development workflow. Both commands run `scripts/start-development.cjs`: it checks the translation API, starts the default local API if needed, waits for its health endpoint, and then starts Expo. An existing API is reused. Ctrl+C stops processes launched by this script, leaving an independently running API alone.
+   Alternatively, `npm start` opens the Expo development workflow. Both commands run `scripts/start-development.cjs`: it checks the translation API, starts the default local API if needed, waits for its health endpoint, and then starts Expo. An existing API is reused only after the account session endpoint is also checked. An older translation-only server is rejected with instructions to restart the API. Ctrl+C stops processes launched by this script, leaving an independently running API alone.
 
 If `EXPO_PUBLIC_TRANSLATION_API_URL` is set, that service must already be running. Startup reports an error if it cannot reach it; it does not start a replacement server. The automatically launched default API uses port 3001.
 
@@ -51,6 +51,31 @@ npm run server
 `npx expo start` bypasses the combined startup script, so the API must be started separately. `npm run ios` and `npm run android` invoke Expo's native build commands and also require a separately reachable translation service. On a physical device, configure the API URL with the development computer's reachable LAN address instead of `localhost`. Restart Expo after changing public environment variables. If Expo uses another web port, update `CLIENT_ORIGIN` and restart the API.
 
 ## Using the app
+
+### Welcome and accounts
+
+New visitors see a three-step welcome flow:
+
+1. **Language:** choose the preferred language before reading the introduction.
+2. **About the app:** a short illustrated overview of documents, deadlines, chat, and local legal help.
+3. **Your account:** create an account with a username, password, and password confirmation. Returning users can choose Sign in.
+
+After registration or sign-in, **Profile** is the first app screen. The root `/` route also redirects to Profile; chat is now `/chat`. Protected routes are unavailable while signed out. Profile shows the username and a Sign out action. The old starter-menu component is retained under `src/components/StarterMenu.tsx` rather than exposed as a route.
+
+Usernames are case-insensitive and use 3–32 letters, numbers, or underscores. New passwords require 9–128 characters, allow spaces and Unicode, and are never truncated. Account recovery/password reset and email verification are not implemented; keep the credentials available.
+
+The account API runs alongside translation on the Express server. Restart an already-running API after updating to this version. `EXPO_PUBLIC_AUTH_API_URL` optionally selects a separate account API; otherwise it uses `EXPO_PUBLIC_TRANSLATION_API_URL` or `http://localhost:3001`.
+
+### Password and session storage
+
+Passwords are hashed on the server with **scrypt** (`N=131072`, `r=8`, `p=1`, 64-byte output), with a random 16-byte salt for each password. Verification uses a timing-safe comparison. This follows the [OWASP scrypt password-storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html); passwords are not stored in plaintext or reversibly encrypted.
+
+Accounts, salted hashes, hashed session tokens, and throttling records live in `server/private/accounts.sqlite3`. The private directory is created with owner-only access and the database with mode `0600`; the directory and database journals are excluded from Git. This database is separate from the public lawyer directory. Set `AUTH_DATABASE_PATH` to an absolute path outside the web bundle to use a different private storage location. Protect and back up this file as credential data; it is not an encrypted-at-rest database.
+
+Web sessions use a seven-day HttpOnly, SameSite=Lax cookie. Session tokens are random; only their SHA-256 hashes are stored by the server. Logout revokes the active session. Native clients keep the token in memory, so a new launch requires signing in again. No password or session token is stored in Redux or browser localStorage. The app rechecks sessions on activation and periodically.
+
+The API validates credentials, uses parameterized SQL, limits attempts by IP and username, limits concurrent password hashing, and rejects cross-origin writes and non-JSON requests. For deployment, set `NODE_ENV=production` and serve the app/API over HTTPS: authentication rejects insecure requests and cookies become Secure. If behind a trusted TLS-terminating proxy, configure `TRUST_PROXY_HOPS` to its exact hop count and prevent direct access that could spoof forwarded headers. The default SameSite cookie setup expects a same-site app/API deployment. Local HTTP is for development only.
+
 
 ### Navigation and appearance
 
@@ -99,7 +124,7 @@ Canceling or failing processing preserves the existing document and deadlines. P
 
 The viewer previews supported originals on web and provides open/share or download actions appropriate to the platform. If an original is unavailable, extracted text remains available when present; re-upload to restore the original preview.
 
-**Additional information** accepts multiple files of any type without an app-imposed count or size limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
+**Additional information** accepts multiple files of any type without an app-imposed count or size limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. In profile edit mode, an × button beside each additional file removes its saved original and profile entry. If deletion fails, the entry stays available for retry. The condensed report updates automatically after removal. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
 
 ### Condensed user information
 
@@ -186,7 +211,7 @@ This is a local directory database, separate from user profile storage. The buil
 
 | Data | Current storage/flow |
 | --- | --- |
-| Chat, location, document metadata/extracted text, deadlines, additional-file metadata, report, report overrides, checklist completion, preferred language | Redux state persisted through `redux-persist/lib/storage` on web, under `persist:app` in localStorage. |
+| Chat, location, document metadata/extracted text, deadlines, additional-file metadata, report, report overrides, checklist completion, preferred language | Redux state persisted through `redux-persist/lib/storage` on web, under `persist:app:user:<account-id>` in localStorage. Guest onboarding uses `persist:app:onboarding`. |
 | Original uploaded files on web | IndexedDB database `evictwise-documents`, object store `files`. Redux stores the file identifier. |
 | Original uploaded files on native | Copied into the application's documents directory through Expo FileSystem. |
 | Theme and language preferences | Browser localStorage when available (`preferred-theme`, `preferred-language`). |
@@ -194,7 +219,7 @@ This is a local directory database, separate from user profile storage. The buil
 | Chat, document image transcription, deadline extraction, report generation | Sent to OpenAI from the client as needed. |
 | Translation text, interface strings, and condensed report display/English normalization | Sent through the Express API to Google Cloud Translation. |
 
-There is no account-based cloud synchronization or application database server for user profiles. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native metadata persistence is not configured with an AsyncStorage adapter; the existing Redux persistence adapter targets web storage, so cross-launch native persistence should not be assumed.
+Accounts are stored on the server, but case profiles and original documents are still local: there is no cloud synchronization for case data. Profile storage is separated by account in the app; localStorage and IndexedDB are not encrypted and remain accessible to someone with access to that browser/device. Legacy unowned `persist:app` data is left intact and is not automatically imported into a new account. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native metadata persistence is not configured with an AsyncStorage adapter; the existing Redux persistence adapter targets web storage, so cross-launch native persistence should not be assumed.
 
 **Development credential limitation:** OpenAI calls currently run in the client with `dangerouslyAllowBrowser: true`. `EXPO_PUBLIC_OPENAI_API_KEY` is bundled into the client and is visible to users, even if `.env.local` is ignored by Git. A production deployment needs authenticated server-side OpenAI calls and appropriate handling of uploaded personal information. Keep actual credentials, environment files, and logs out of commits.
 
@@ -203,7 +228,11 @@ There is no account-based cloud synchronization or application database server f
 | Location | Responsibility |
 | --- | --- |
 | `src/app/_layout.tsx` | Theme, Redux persistence, translation, condensed-info, menu providers, and route stack. |
-| `src/app/index.tsx` | Chat requests, composer, conversation scrolling, and empty state. |
+| `src/app/index.tsx` | Redirects to Profile after authentication. |
+| `src/app/chat.tsx` | Chat requests, composer, conversation scrolling, and empty state. |
+| `src/app/welcome.tsx` | Language-first welcome, overview, account creation, and sign-in. |
+| `src/context/AuthContext.tsx`, `src/auth/api.ts` | Session restoration, authentication, and logout. |
+| `server/auth.cjs` | Private account database, scrypt password hashing, sessions, and throttling. |
 | `src/app/profile.tsx` | Profile information, upload/view actions, and condensed report placement. |
 | `src/app/calendar.tsx` | Calendar grid, selected-day details, responsive checklist placement. |
 | `src/app/lawyer-connect.tsx` | Local legal-help organization cards from the generated dataset and contact actions. |
@@ -230,10 +259,11 @@ Run from the project root:
 npx tsc --noEmit
 node --test tests/*.test.cjs
 npm run test:translation
+npm run test:auth
 git diff --check
 ```
 
-Tests cover upload success/failure, profile context, automatic report updates and cancellation, report edits, checklist ordering/completion, chat input/scrolling, startup lifecycle, notification helpers, and translation HTTP/CORS/error handling. Translation tests mock Google rather than using live credentials; HTTP tests need permission to bind local ports. These checks do not replace browser or native-device visual testing.
+Tests cover onboarding, profile isolation, account/session lifecycle and security checks, upload success/failure, profile context, automatic report updates and cancellation, report edits, checklist ordering/completion, chat input/scrolling, startup lifecycle, notification helpers, and translation HTTP/CORS/error handling. Translation tests mock Google rather than using live credentials; HTTP tests need permission to bind local ports. Account tests use temporary databases and do not create real accounts. These checks do not replace browser or native-device visual testing.
 
 ## Troubleshooting
 

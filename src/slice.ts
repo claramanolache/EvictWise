@@ -59,6 +59,11 @@ export const slice = createSlice({
     updateUserInfoEdits: (state, action: PayloadAction<ReportEdits>) => {
       state.userInfoEdits = { ...state.userInfoEdits, ...action.payload };
     },
+    removeAdditionalFile: (state, action: PayloadAction<number>) => {
+      if (Number.isInteger(action.payload) && action.payload >= 0 && action.payload < (state.additionalFiles?.length ?? 0)) {
+        state.additionalFiles!.splice(action.payload, 1);
+      }
+    },
     addAdditionalFile: (state, action: PayloadAction<FileData>) => {
       (state.additionalFiles ??= []).push(action.payload);
     },
@@ -122,6 +127,7 @@ export const {
   toggleCalendarTask,
   updateUserInfoEdits,
   addAdditionalFile,
+  removeAdditionalFile,
   setUserInfoReport,
   viewFirstTime,
   addMessage,

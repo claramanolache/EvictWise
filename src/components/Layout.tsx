@@ -10,7 +10,7 @@ import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-fre
 import { useTranslation } from "@/Translation/TranslationContext";
 
 const menuItems = [
-  { label: "menuChat", route: "/", icon: "chat" },
+  { label: "menuChat", route: "/chat", icon: "chat" },
   { label: "menuProfile", route: "/profile", icon: "profile" },
   { label: "menuCalendar", route: "/calendar", icon: "calendar" },
   { label: "menuLawyerConnect", route: "/lawyer-connect", icon: "case" },

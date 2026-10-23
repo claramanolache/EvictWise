@@ -49,6 +49,44 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  removeAdditionalFile: "Remove file",
+  removeAdditionalFileFailed: "Could not remove this file. Please try again.",
+  welcomeLanguageStep: "Language",
+  welcomeOverviewStep: "About the app",
+  welcomeAccountStep: "Your account",
+  welcomeChooseLanguage: "Choose your language",
+  welcomeLanguageHelp: "Choose the language you feel most comfortable with. You can change it later.",
+  welcomeTitle: "A clearer path through housing uncertainty.",
+  welcomeIntro: "Bring your documents, questions, and next steps together in one place. Evict Wise helps you understand your situation and prepare for what comes next.",
+  welcomeDocuments: "Understand your documents",
+  welcomeDocumentsHelp: "Upload your lease or eviction notice and keep a concise summary of your situation.",
+  welcomeDeadlines: "Keep track of what matters",
+  welcomeDeadlinesHelp: "See important dates on your calendar and check off tasks as you complete them.",
+  welcomeSupport: "Find answers and local help",
+  welcomeSupportHelp: "Ask follow-up questions in your language and explore local legal-help organizations.",
+  welcomeAccountHelp: "After signing in, start with your profile to add your location and documents.",
+  welcomeContinue: "Continue",
+  authCreateAccount: "Create account",
+  authSignIn: "Sign in",
+  authSignOut: "Sign out",
+  authUsername: "Username",
+  authUsernameHelp: "3–32 letters, numbers, or underscores. Usernames are not case-sensitive.",
+  authPassword: "Password",
+  authConfirmPassword: "Confirm password",
+  authPasswordHelp: "At least 9 characters.",
+  authAlreadyAccount: "Already have an account? Sign in",
+  authNeedAccount: "New here? Create an account",
+  authInvalidInput: "Enter a valid username and password.",
+  authPasswordPolicy: "Use a password with 9–128 characters.",
+  authPasswordMismatch: "The passwords do not match.",
+  authInvalidCredentials: "The username or password is incorrect.",
+  authUsernameUnavailable: "That username is unavailable. Choose another or sign in.",
+  authTooManyAttempts: "Too many attempts. Please wait and try again later.",
+  authUnavailable: "Cannot reach the account service. Please try again.",
+  authHttpsRequired: "A secure HTTPS connection is required to sign in.",
+  authForbidden: "This app address is not allowed by the account service.",
+  authInvalidRequest: "The account request could not be processed.",
+  authSignInRequired: "Please sign in to continue.",
   lawyerShowDetails: "Show details",
   lawyerHideDetails: "Hide details",
   lawyerTranslationFailed: "Could not translate organization details. Showing English; you can retry.",
@@ -155,8 +193,9 @@ const ENGLISH_INTERFACE = {
   documentUploadFailed: "Could not process the document. Please try again.",
   notUploaded: "Not uploaded",
   notSet: "Not set",
-  doneEditing: "Done Editing",
+  doneEditing: "Done",
   editInformation: "Edit Information",
+  uploadInformationToBegin: "Please upload information to begin planning",
   selectLocation: "Select Your Location",
   useCurrentLocation: "Use Current Location",
   enterManually: "Enter Manually",
@@ -180,13 +219,13 @@ const ENGLISH_INTERFACE = {
   translationFailed: "Translation failed.",
 };
 
-export function TranslationProvider({ children }) {
+export function TranslationProvider({ children, initialLanguage }) {
   const dispatch = useDispatch();
   const savedLanguage = useSelector(state => state.app.preferredLanguage);
   const supported = code => LANGUAGES.some(item => item.code === code);
   const [legacyLanguage] = useState(() => readStorage("preferred-language"));
   const preference = supported(savedLanguage) ? savedLanguage
-    : supported(legacyLanguage) ? legacyLanguage : null;
+    : supported(initialLanguage) ? initialLanguage : supported(legacyLanguage) ? legacyLanguage : null;
   const language = preference || ORIGINAL_LANGUAGE;
   const [selection, setSelection] = useState(0);
   const conversationTranslation = useMemo(
@@ -229,7 +268,7 @@ export function TranslationProvider({ children }) {
       return;
     }
 
-    const cacheKey = `interface-v23-${language}`;
+    const cacheKey = `interface-v29-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/AuthContext";
 import { LANGUAGES } from "@/Translation/languages";
 import ThemedPressable from "@/components/ThemedPressable";
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
@@ -17,6 +18,9 @@ import { setEvictionNotice, setLeaseAgreement } from "@/slice";
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
+  const { user, logout } = useAuth();
+  const [logoutFailed, setLogoutFailed] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { t, language } = useTranslation();
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
@@ -108,6 +112,10 @@ export default function ProfilePage() {
              {isEditing && <Text style={styles.editingModeText}>{t("editingMode")}</Text>}
         </View>
 
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>{t("authUsername")}</Text>
+          <Text style={styles.infoValue}>{user?.username}</Text>
+        </View>
         {renderRow(t("evictionNoticeLabel"), evictionNotice ? evictionNotice.name : t("notUploaded"), 'eviction')}
         {renderRow(t("leaseAgreementLabel"), leaseAgreement ? leaseAgreement.name : t("notUploaded"), 'lease')}
         {renderRow(t("locationLabel"), location ? `${location.city}, ${location.state}, ${location.country}` : t("notSet"), 'location')}
@@ -121,16 +129,20 @@ export default function ProfilePage() {
           <Text style={styles.infoLabel}>{t("preferredLanguage")}</Text>
           <Text style={styles.infoValue}>{LANGUAGES.find(item => item.code === language)?.name || language}</Text>
         </View>
-        <AdditionalInformation onView={setViewedFile} />
+        <AdditionalInformation onView={setViewedFile} isEditing={isEditing} />
       </View>
-
-      <CondensedUserInfo />
 
       {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
       {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
       <ThemedPressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
-        <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : "editInformation")}</Text>
+        <Text style={styles.editButtonText}>{t(isEditing ? "doneEditing" : evictionNotice && leaseAgreement ? "editInformation" : "uploadInformationToBegin")}</Text>
       </ThemedPressable>
+      {evictionNotice && leaseAgreement ? <CondensedUserInfo /> : null}
+      <Pressable accessibilityRole="button" disabled={loggingOut} onPress={async () => {
+        setLoggingOut(true); setLogoutFailed(false);
+        try { await logout(); } catch { setLogoutFailed(true); } finally { setLoggingOut(false); }
+      }} style={{ padding: 16, alignItems: "center" }}><Text style={{ color: theme.textSecondary }}>{t("authSignOut")}</Text></Pressable>
+      {logoutFailed && <Text accessibilityRole="alert" style={{ color: theme.textWarning }}>{t("authUnavailable")}</Text>}
       </ScrollView>
     </Layout>
   );
@@ -235,11 +247,12 @@ const createStyles = (theme: Themes) => StyleSheet.create({
       paddingVertical: 12,
       borderRadius: 8,
       alignItems: 'center',
-      marginTop: Spacing.four,
+      marginBottom: Spacing.four,
   },
   editButtonText: {
       color: theme.textOnAccent,
       fontWeight: 'bold',
       fontSize: 16,
+      textAlign: "center",
   }
 });

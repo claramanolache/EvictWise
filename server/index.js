@@ -7,6 +7,9 @@ const cors = require("cors");
 const { TranslationServiceClient } = require("@google-cloud/translate");
 
 const app = express();
+// Set only when deployed behind this exact number of trusted reverse proxies.
+const proxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
+if (Number.isInteger(proxyHops) && proxyHops > 0) app.set("trust proxy", proxyHops);
 const translationClient = new TranslationServiceClient();
 
 const PORT = Number(process.env.PORT || 3001);
@@ -17,10 +20,20 @@ const CLIENT_ORIGIN =
 app.use(
   cors({
     origin: CLIENT_ORIGIN,
+    credentials: true,
   })
 );
 
 app.use(express.json({ limit: "100kb" }));
+
+// Authentication storage is opened only when an account endpoint is used.
+let auth;
+app.use("/api/auth", (req, res, next) => {
+  try {
+    auth ??= require("./auth.cjs").createAuthRouter({ origin: CLIENT_ORIGIN });
+    auth.router(req, res, next);
+  } catch { res.status(503).json({ error: "authUnavailable" }); }
+});
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });

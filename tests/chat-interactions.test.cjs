@@ -30,7 +30,7 @@ function setup(messages = []) {
     openai: class { chat = { completions: { create: request => new Promise((resolve, reject) => requests.push({ request, resolve, reject })) } }; },
   };
   const exports = {};
-  const code = ts.transpileModule(fs.readFileSync(require.resolve('../src/app/index.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const code = ts.transpileModule(fs.readFileSync(require.resolve('../src/app/chat.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   vm.runInNewContext(code, { exports, require: name => mocks[name] ?? require(name), process: { env: {} } });
   function flatten(node) { if (!node || typeof node !== 'object') return []; if (Array.isArray(node)) return node.flatMap(flatten); return [node, ...flatten(node.props?.children)]; }
   return { sent, requests, render() { cursor = 0; const nodes = flatten(exports.default()); return { get: type => nodes.find(node => node.type === type), nodes }; } };

@@ -61,7 +61,11 @@
     "android": "node_modules/.bin/expo run:android",
     "ios": "node_modules/.bin/expo run:ios",
     "web": "node scripts/start-development.cjs --web",
-    "lint": "node_modules/.bin/expo lint"
+    "lint": "node_modules/.bin/expo lint",
+    "test:auth": "node --test server/auth.test.cjs"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  }
 }

@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
 
-function setup({ ready = [true], env = {} } = {}) {
+function setup({ ready = [true], authReady = true, env = {} } = {}) {
   const children = [], calls = [], errors = [], signals = {};
   const proc = { env, argv: ['node', 'script', '--web'], execPath: process.execPath, once: (name, fn) => { signals[name] = fn; } };
   const module = { exports: {} };
@@ -24,7 +24,11 @@ function setup({ ready = [true], env = {} } = {}) {
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../scripts/start-development.cjs'), 'utf8'), {
     require: mockRequire, module, __dirname: path.join(__dirname, '../scripts'), process: proc,
     AbortSignal, console: { error: message => errors.push(message) },
-    fetch: async url => { calls.push(url); return { ok: true, json: async () => ({ ok: ready.length > 1 ? ready.shift() : ready[0] }) }; },
+    fetch: async url => {
+      calls.push(url);
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: authReady ? 401 : 404, json: async () => authReady ? { error: 'authSignInRequired' } : {} };
+      return { ok: true, json: async () => ({ ok: ready.length > 1 ? ready.shift() : ready[0] }) };
+    },
   });
   return { ...module.exports, children, calls, errors, signals, proc };
 }
@@ -65,4 +69,19 @@ test('API process failure stops Expo and preserves the failing exit status', asy
   h.children[0].child.emit('exit', 1);
   assert.equal(h.children[1].child.killedWith, 'SIGTERM');
   assert.equal(h.proc.exitCode, 1);
+});
+
+
+test('does not reuse a translation-only server for an app that needs accounts', async () => {
+  const h = setup({ authReady: false });
+  await h.main();
+  assert.equal(h.children.length, 0);
+  assert.equal(h.proc.exitCode, 1);
+  assert.match(h.errors[0], /account API is unavailable or outdated/);
+});
+test('checks a separately configured account endpoint before starting Expo', async () => {
+  const h = setup({ env: { EXPO_PUBLIC_AUTH_API_URL: 'https://accounts.example.test/' } });
+  await h.main();
+  assert.ok(h.calls.includes('https://accounts.example.test/api/auth/session'));
+  assert.equal(h.children.length, 1);
 });

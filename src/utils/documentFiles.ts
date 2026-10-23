@@ -51,3 +51,22 @@ export async function loadOriginalFile(id: string): Promise<string> {
     db.close();
   }
 }
+
+export async function removeOriginalFile(id: string): Promise<void> {
+  if (Platform.OS !== "web") {
+    const { File } = await import("expo-file-system");
+    const file = new File(id);
+    if (file.exists) file.delete();
+    return;
+  }
+  const db = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("files", "readwrite");
+      tx.objectStore("files").delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally { db.close(); }
+}
