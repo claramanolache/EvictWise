@@ -1,64 +1,129 @@
--- Random data for lawyers
-USE lawyers;
+-- User-supplied organization directory. Missing details are NULL or absent child rows.
+-- Re-running updates these six organizations; unrelated organizations are preserved.
 
-INSERT INTO contact (fname, lname, email, phone) VALUES 
-('Harvey', 'Specter', 'harvey@specterliber.com', '0712345678'),
-('Jessica', 'Pearson', 'jessica@pearsonhardman.com', '0722345678'),
-('Louis', 'Litt', 'louis.litt@pearsonhardman.com', '0732345678'),
-('Donna', 'Paulsen', 'donna@specterliber.com', '0742345678'),
-('Rachel', 'Zane', 'rachel.zane@zaneandassoc.com', '0752345678');
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('project-sentinel', 'Project Sentinel', 'https://www.housing.org/contact', '(800) 339-6043', 'info@housing.org', '1490 El Camino Real, Santa Clara, CA 95050', 'Provides counseling and fair housing services', 'Offers other language assistance through Language Services Associates')
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'project-sentinel';
+INSERT INTO organization_counties (organization_id, county) VALUES ('project-sentinel', 'San Mateo');
+INSERT INTO organization_counties (organization_id, county) VALUES ('project-sentinel', 'Santa Clara');
+INSERT INTO organization_counties (organization_id, county) VALUES ('project-sentinel', 'Sacramento');
+INSERT INTO organization_counties (organization_id, county) VALUES ('project-sentinel', 'Stanislaus');
+DELETE FROM organization_services WHERE organization_id = 'project-sentinel';
+INSERT INTO organization_services (organization_id, service) VALUES ('project-sentinel', 'tenant counseling');
+INSERT INTO organization_services (organization_id, service) VALUES ('project-sentinel', 'mediation');
+INSERT INTO organization_services (organization_id, service) VALUES ('project-sentinel', 'fair housing');
+DELETE FROM organization_representation_levels WHERE organization_id = 'project-sentinel';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('project-sentinel', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('project-sentinel', 'limited representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'project-sentinel';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('project-sentinel', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('project-sentinel', 'court papers filed');
+DELETE FROM organization_languages WHERE organization_id = 'project-sentinel';
+INSERT INTO organization_languages (organization_id, language) VALUES ('project-sentinel', 'English');
+INSERT INTO organization_languages (organization_id, language) VALUES ('project-sentinel', 'Spanish');
 
--- Assuming IDs 1-5 were generated for the above contacts
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('law-foundation-silicon-valley', 'Law Foundation of Silicon Valley', 'https://www.lawfoundation.org/', '(408) 293-4790', NULL, '4 North Second Street, Suite 1300, San Jose, CA 95113', 'Primary eviction-defense provider for Santa Clara County', 'Other, unlisted languages also offered')
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'law-foundation-silicon-valley';
+INSERT INTO organization_counties (organization_id, county) VALUES ('law-foundation-silicon-valley', 'Santa Clara');
+DELETE FROM organization_services WHERE organization_id = 'law-foundation-silicon-valley';
+INSERT INTO organization_services (organization_id, service) VALUES ('law-foundation-silicon-valley', 'eviction defense');
+INSERT INTO organization_services (organization_id, service) VALUES ('law-foundation-silicon-valley', 'housing law');
+INSERT INTO organization_services (organization_id, service) VALUES ('law-foundation-silicon-valley', 'full representation');
+INSERT INTO organization_services (organization_id, service) VALUES ('law-foundation-silicon-valley', 'legal advice');
+DELETE FROM organization_representation_levels WHERE organization_id = 'law-foundation-silicon-valley';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('law-foundation-silicon-valley', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('law-foundation-silicon-valley', 'full representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'law-foundation-silicon-valley';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('law-foundation-silicon-valley', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('law-foundation-silicon-valley', 'lawsuit filed');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('law-foundation-silicon-valley', 'trial');
+DELETE FROM organization_languages WHERE organization_id = 'law-foundation-silicon-valley';
+INSERT INTO organization_languages (organization_id, language) VALUES ('law-foundation-silicon-valley', 'English');
+INSERT INTO organization_languages (organization_id, language) VALUES ('law-foundation-silicon-valley', 'Spanish');
+INSERT INTO organization_languages (organization_id, language) VALUES ('law-foundation-silicon-valley', 'Vietnamese');
 
--- Education
-INSERT INTO education (lawyer_id, degree, university) VALUES
-(1, 'J.D.', 'Harvard Law School'),
-(2, 'J.D.', 'Harvard Law School'),
-(3, 'J.D.', 'Columbia Law School'),
-(4, 'B.A.', 'New York University'),
-(5, 'J.D.', 'Columbia Law School');
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('bay-area-legal-aid', 'Bay Area Legal Aid', 'https://baylegal.org/', '800-551-5554', NULL, NULL, 'Large regional legal aid organization serving multiple Bay Area counties', NULL)
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'bay-area-legal-aid';
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'Alameda');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'Contra Costa');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'Marin');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'Napa');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'San Francisco');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'San Mateo');
+INSERT INTO organization_counties (organization_id, county) VALUES ('bay-area-legal-aid', 'Santa Clara');
+DELETE FROM organization_services WHERE organization_id = 'bay-area-legal-aid';
+INSERT INTO organization_services (organization_id, service) VALUES ('bay-area-legal-aid', 'housing law');
+INSERT INTO organization_services (organization_id, service) VALUES ('bay-area-legal-aid', 'eviction defense');
+INSERT INTO organization_services (organization_id, service) VALUES ('bay-area-legal-aid', 'legal advice');
+INSERT INTO organization_services (organization_id, service) VALUES ('bay-area-legal-aid', 'limited representation');
+DELETE FROM organization_representation_levels WHERE organization_id = 'bay-area-legal-aid';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('bay-area-legal-aid', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('bay-area-legal-aid', 'limited representation');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('bay-area-legal-aid', 'full representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'bay-area-legal-aid';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('bay-area-legal-aid', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('bay-area-legal-aid', 'lawsuit filed');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('bay-area-legal-aid', 'trial');
+DELETE FROM organization_languages WHERE organization_id = 'bay-area-legal-aid';
 
--- Credits (Bar Licenses)
-INSERT INTO credits (bar_lisence, state_of_bar, lawyer_id) VALUES 
-(12345, 'NY', 1),
-(11111, 'NY', 2),
-(22222, 'NY', 3),
-(33333, 'NY', 4),
-(44444, 'NY', 5);
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('eviction-defense-collaborative', 'Eviction Defense Collaborative', 'https://evictiondefense.org/', '(415) 947-0797', 'legal@evictiondefense.org', '976 Mission St. San Francisco, CA 94103', 'Major provider of San Francisco tenant defense services', NULL)
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'eviction-defense-collaborative';
+INSERT INTO organization_counties (organization_id, county) VALUES ('eviction-defense-collaborative', 'San Francisco');
+DELETE FROM organization_services WHERE organization_id = 'eviction-defense-collaborative';
+INSERT INTO organization_services (organization_id, service) VALUES ('eviction-defense-collaborative', 'eviction defense');
+INSERT INTO organization_services (organization_id, service) VALUES ('eviction-defense-collaborative', 'full representation');
+INSERT INTO organization_services (organization_id, service) VALUES ('eviction-defense-collaborative', 'tenant counseling');
+INSERT INTO organization_services (organization_id, service) VALUES ('eviction-defense-collaborative', 'emergency assistance');
+DELETE FROM organization_representation_levels WHERE organization_id = 'eviction-defense-collaborative';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('eviction-defense-collaborative', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('eviction-defense-collaborative', 'full representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'eviction-defense-collaborative';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('eviction-defense-collaborative', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('eviction-defense-collaborative', 'lawsuit filed');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('eviction-defense-collaborative', 'trial');
+DELETE FROM organization_languages WHERE organization_id = 'eviction-defense-collaborative';
 
--- Jurisdiction
-INSERT INTO jurisdiction (lawyer_id, jurisdiction) VALUES 
-(1, 'New York'),
-(1, 'Federal'),
-(2, 'New York'),
-(2, 'Chicago'),
-(3, 'New York'),
-(4, 'New York'),
-(5, 'New York');
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('legal-aid-san-mateo', 'Legal Aid Society of San Mateo County', 'https://www.legalaidsmc.org/', '(650) 558-0915', NULL, '330 Twin Dolphin Drive, Suite 123, Redwood City, CA 94065', 'Primary legal aid organization for San Mateo County residents', NULL)
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'legal-aid-san-mateo';
+INSERT INTO organization_counties (organization_id, county) VALUES ('legal-aid-san-mateo', 'San Mateo');
+DELETE FROM organization_services WHERE organization_id = 'legal-aid-san-mateo';
+INSERT INTO organization_services (organization_id, service) VALUES ('legal-aid-san-mateo', 'housing law');
+INSERT INTO organization_services (organization_id, service) VALUES ('legal-aid-san-mateo', 'tenant counseling');
+INSERT INTO organization_services (organization_id, service) VALUES ('legal-aid-san-mateo', 'legal advice');
+DELETE FROM organization_representation_levels WHERE organization_id = 'legal-aid-san-mateo';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('legal-aid-san-mateo', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('legal-aid-san-mateo', 'limited representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'legal-aid-san-mateo';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('legal-aid-san-mateo', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('legal-aid-san-mateo', 'lawsuit filed');
+DELETE FROM organization_languages WHERE organization_id = 'legal-aid-san-mateo';
 
--- Scope Law
-INSERT INTO scopelaw (lawyer_id, scope) VALUES 
-(1, 'Corporate'),
-(1, 'Litigation'),
-(2, 'Corporate'),
-(2, 'Management'),
-(3, 'Finance'),
-(3, 'Litigation'),
-(4, 'Legal Assistance'),
-(5, 'Paralegal'),
-(5, 'Family Law');
-
--- Prices
-INSERT INTO prices (lawyer_id, case_type, standard_price, discount_offer) VALUES 
-(1, 'Corporate Merger', 5000.00, 0),
-(1, 'Litigation', 3000.00, 1),
-(2, 'Corporate Strategy', 6000.00, 0),
-(3, 'Financial Fraud', 4500.00, 1),
-(5, 'Divorce', 2000.00, 1);
-
--- Cases
-INSERT INTO cases (case_citation, type, description, file_link, win, lawyer_id) VALUES 
-('Specter v. Hardman 2024', 'Litigation', 'Corporate takeover dispute', 'specter_v_hardman.pdf', 1, 1),
-('Pearson v. Darby 2023', 'Arbitration', 'International merger conflict', 'pearson_darby.txt', 1, 2),
-('Litt v. Gillis 2022', 'Finance', 'Insider trading investigation', 'litt_gillis.md', 0, 3),
-('Zane v. Rand 2025', 'Family Law', 'High profile divorce case', 'zane_rand.pdf', 1, 5);
+INSERT INTO organizations (id, name, website, phone, email, address, description, language_assistance_notes)
+VALUES ('clsepa', 'Community Legal Services East Palo Alto', 'https://clsepa.org/', '650 326-6440', NULL, '1861 Bay Rd. East Palo Alto, CA 94303', 'Important provider for East Palo Alto and surrounding communities', NULL)
+ON CONFLICT(id) DO UPDATE SET name = excluded.name, website = excluded.website, phone = excluded.phone, email = excluded.email, address = excluded.address, description = excluded.description, language_assistance_notes = excluded.language_assistance_notes;
+DELETE FROM organization_counties WHERE organization_id = 'clsepa';
+INSERT INTO organization_counties (organization_id, county) VALUES ('clsepa', 'Santa Clara');
+INSERT INTO organization_counties (organization_id, county) VALUES ('clsepa', 'San Mateo');
+DELETE FROM organization_services WHERE organization_id = 'clsepa';
+INSERT INTO organization_services (organization_id, service) VALUES ('clsepa', 'housing law');
+INSERT INTO organization_services (organization_id, service) VALUES ('clsepa', 'eviction defense');
+INSERT INTO organization_services (organization_id, service) VALUES ('clsepa', 'tenant counseling');
+INSERT INTO organization_services (organization_id, service) VALUES ('clsepa', 'community advocacy');
+DELETE FROM organization_representation_levels WHERE organization_id = 'clsepa';
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('clsepa', 'advice');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('clsepa', 'limited representation');
+INSERT INTO organization_representation_levels (organization_id, representation_level) VALUES ('clsepa', 'full representation');
+DELETE FROM organization_case_stages WHERE organization_id = 'clsepa';
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clsepa', 'notice received');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clsepa', 'lawsuit filed');
+INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clsepa', 'trial');
+DELETE FROM organization_languages WHERE organization_id = 'clsepa';

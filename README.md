@@ -145,7 +145,42 @@ Notification scheduling helpers exist in `src/events/notifications.ts`, but are 
 
 ### Lawyer Connect
 
-Lawyer Connect displays the saved location, links back to Profile for reviewing information, and opens the Legal Services Corporation and American Bar Association legal-help directories. Users contact organizations themselves. This screen does not book appointments, message lawyers, or automatically match a user to an attorney. SQL files under `src/constants/` are not connected to this screen.
+Lawyer Connect displays the saved location, links back to Profile for reviewing information, and opens the Legal Services Corporation and American Bar Association legal-help directories. Users contact organizations themselves. This screen does not book appointments, message lawyers, or automatically match a user to an attorney. The local SQLite organization directory described below is not yet connected to this screen.
+
+## Legal-help organization database
+
+`data/lawyers.sqlite3` is a SQLite database containing six user-supplied organizations: Project Sentinel, Law Foundation of Silicon Valley, Bay Area Legal Aid, Eviction Defense Collaborative, Legal Aid Society of San Mateo County, and Community Legal Services East Palo Alto.
+
+The directory preserves the supplied contact details and descriptions. Information has not been independently verified. Unspecified emails and addresses are SQL `NULL`; missing language lists mean unknown, not that no languages are supported. Additional language assistance is recorded in `language_assistance_notes`.
+
+| Table | Contents |
+| --- | --- |
+| `organizations` | Stable organization ID, name, website, phone, email, address, description, language assistance notes. |
+| `organization_counties` | One county served per organization/row. |
+| `organization_services` | One service per organization/row. |
+| `organization_representation_levels` | Advice, limited representation, or full representation as supplied. |
+| `organization_case_stages` | Case stages supported, preserving the supplied terminology. |
+| `organization_languages` | Explicitly listed languages per organization. |
+
+Schema: `src/constants/lawyers_structure.sql`. Seed data: `src/constants/lawyer data/populated_data.sql`. These replace the previous incompatible fictional MySQL examples. Rebuild/update the database using Python 3 (no additional Python packages required):
+
+```bash
+python3 scripts/build-lawyer-database.py
+```
+
+Re-running updates the six supplied organizations and their associated lists without creating duplicates or deleting unrelated organizations. Applications opening this database should enable `PRAGMA foreign_keys = ON` for foreign-key enforcement.
+
+Example query to find organizations serving Santa Clara County:
+
+```sql
+SELECT o.name, o.website, o.phone, o.email
+FROM organizations AS o
+JOIN organization_counties AS c ON c.organization_id = o.id
+WHERE c.county = 'Santa Clara'
+ORDER BY o.name;
+```
+
+This is a local directory database, separate from user profile storage. Lawyer Connect currently continues to use its existing external directory links.
 
 ## Data storage and external services
 
