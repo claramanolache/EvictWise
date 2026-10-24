@@ -53,6 +53,7 @@ test('section title expands and collapses the complete grid while contact URLs s
   const react = hooks(), opened = [];
   const { default: Page } = load('app/lawyer-connect.tsx', {
     react, '@/data/lawyers.json': organizations,
+    '@/components/LawyerPreferences': 'LawyerPreferences',
     '@react-native-vector-icons/fontawesome-free-solid': 'Icon',
     '@/hooks/useLawyerTranslation': { useLawyerTranslation: () => ({ translateDetail: text => `translated:${text}`, loading: false, failed: false }) },
     '@/components/ThemedPressable': 'Button', '@/components/Layout': 'Layout',

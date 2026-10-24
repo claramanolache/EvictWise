@@ -1,14 +1,12 @@
+import LawyerPreferences from "@/components/LawyerPreferences";
 import FontAwesomeFreeSolid from "@react-native-vector-icons/fontawesome-free-solid";
 import { useLawyerTranslation } from "@/hooks/useLawyerTranslation";
 import organizations from "@/data/lawyers.json";
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { useState } from "react";
 import { Linking, Pressable, ScrollView, Text, View, } from "react-native";
-import { useRouter } from "expo-router";
-import { useSelector } from "react-redux";
 import Layout from "@/components/Layout";
 import { getTheme } from "@/constants/theme";
-import { RootState } from "@/store";
 import { useTranslation } from "@/Translation/TranslationContext";
 
 export default function LawyerConnect() {
@@ -16,8 +14,6 @@ export default function LawyerConnect() {
   const { translateDetail, loading: translating, failed: translationFailed, retry } = useLawyerTranslation(language);
   const [expanded, setExpanded] = useState(false);
   const theme = getTheme(useColorScheme());
-  const router = useRouter();
-  const location = useSelector((state: RootState) => state.app.location);
   const [failed, setFailed] = useState(false);
 
   async function openDirectory(url: string) {
@@ -33,14 +29,8 @@ export default function LawyerConnect() {
     <Layout>
       <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }}>
         <Text accessibilityRole="header" style={{ color: theme.textHeading, fontSize: 28, fontWeight: "700" }}>{t("menuLawyerConnect")}</Text>
+        <LawyerPreferences />
         <Text style={{ color: theme.textSecondary, fontSize: 16, lineHeight: 24 }}>{t("lawyerConnectDescription")}</Text>
-        <View style={{ padding: 20, gap: 12, borderRadius: 12, backgroundColor: theme.backgroundSecondary }}>
-          <Text style={{ color: theme.text, fontWeight: "600" }}>{t("locationLabel")}</Text>
-          <Text style={{ color: theme.text }}>{location ? [location.city, location.state, location.country].filter(Boolean).join(", ") : t("notSet")}</Text>
-          <Pressable accessibilityRole="button" onPress={() => router.push("/profile")} style={{ paddingVertical: 10 }}>
-            <Text style={{ color: theme.text, textDecorationLine: "underline" }}>{t("lawyerReviewProfile")}</Text>
-          </Pressable>
-        </View>
         {failed && <Text accessibilityRole="alert" style={{ color: theme.textWarning, backgroundColor: theme.backgroundError, padding: 12, borderRadius: 8 }}>{t("lawyerContactFailed")}</Text>}
         <Pressable accessibilityRole="button" accessibilityLabel={t("lawyerOrganizations")} accessibilityState={{ expanded }}
           onPress={() => setExpanded(value => !value)}

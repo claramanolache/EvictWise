@@ -49,6 +49,12 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  lawyerPriorities: "Your priorities",
+  lawyerPrioritiesHelp: "Rate how important each factor is to you, from 1 (less important) to 10 (most important).",
+  lawyerPriorityProximity: "Jurisdiction and proximity",
+  lawyerPrioritySpecialization: "Case specialization",
+  lawyerPriorityLanguage: "Language compatibility",
+  lawyerPriorityAffordability: "Affordability",
   tourStep: "Step",
   tourSkip: "Skip tour",
   tourNext: "Next",
@@ -282,7 +288,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v30-${language}`;
+    const cacheKey = `interface-v32-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
