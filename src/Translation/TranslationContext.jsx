@@ -171,6 +171,9 @@ const ENGLISH_INTERFACE = {
   language: "Language",
   conversation: "Conversation",
   messagePlaceholder: "Type your message...",
+  legalSources: "Legal sources (original text)",
+  sourcePage: "Page",
+  sourcePassage: "Passage",
   send: "Send",
   startConversation: "Start a conversation...",
   profileTitle: "Profile Page",
@@ -288,7 +291,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v32-${language}`;
+    const cacheKey = `interface-v33-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

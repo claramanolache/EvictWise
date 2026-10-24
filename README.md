@@ -282,3 +282,49 @@ Tests cover onboarding, profile isolation, account/session lifecycle and securit
 | A report field stops updating automatically | It may have a saved manual override. Unedited fields still regenerate. |
 | Checklist is empty | Upload an eviction notice or lease containing extractable deadlines. Additional-file uploads do not currently extract events. |
 | Data appears missing after changing development ports | Browser storage is scoped to the origin. Return to the original origin to access its saved data. |
+
+## Retrieval-augmented chat (RAG)
+
+Chat now uses an authenticated server endpoint (`POST /api/auth/chat`) to retrieve legal references before generating an answer. Existing profile context, follow-up questions, translation, and chat controls are preserved. Expand **Legal sources** under an answer to see the original excerpts and their filename, PDF page, or text passage number. The displayed answer can be translated; source excerpts remain verbatim.
+
+### Add your legal knowledge
+
+1. Set `GEMINI_API_KEY` in `server/.env` (server-only; do not prefix this key with `EXPO_PUBLIC_`).
+2. Put UTF-8 `.txt`, `.md`, or text-based `.pdf` reference files in `src/legal_knowlege/`, including nested folders. Include jurisdiction, effective/review dates, and official URLs in the source text. Scanned PDFs require OCR; maximum file size is 25 MB.
+   Catalog Markdown marked `content_status: source-reference-only` is skipped. Replace it with reviewed full source text and remove that marker before indexing. `RAG_KNOWLEDGE_PATH` can select a different folder.
+3. Run `npm run rag:index` and check its file/chunk counts. Repeat after changing or deleting documents. The command skips unchanged chunks, replaces changed chunks, and removes deleted sources. Failures preserve the prior index.
+4. Start/restart the API with `npm run server`, or use `npm run web` to launch the development app/API. An already running API must be restarted once after this code update. Later index updates do not require a restart.
+
+The default embedding model is `gemini-embedding-001`; `RAG_EMBEDDING_MODEL` overrides it. Changing the model requires rebuilding the index. The default generation model is `gemini-3.8-flash`, configurable through `RAG_CHAT_MODEL` in `server/.env`. See the [Gemini compatibility documentation](https://ai.google.dev/gemini-api/docs/openai).
+
+### How retrieval works
+
+The indexer extracts text, splits it into approximately 1,800-character passages with 250-character overlap, batches embeddings, and stores vectors and source metadata in `server/private/legal-index-gemini.sqlite3`. At chat time, the last four turns form the search query. Exact cosine search selects up to six passages with score >= 0.25. This lightweight SQLite implementation is intended for small/medium curated libraries; search scans all vectors and is not an approximate-nearest-neighbor service. Evaluate retrieval quality against your own legal questions before production use; the score cutoff is a heuristic, not a legal-confidence measure.
+
+The server combines retrieved text with bounded recent conversation and saved profile context. Only user/assistant message roles are accepted; system instructions stay server-controlled. Generation is instructed to cite retrieved sources, distinguish personal facts from legal rules, check jurisdiction/dates, and acknowledge missing support. Citation IDs are validated against retrieved passages; this does not independently prove every generated claim. With an empty library or no matching passages, chat returns an explicit knowledge-gap response without generating unsupported legal guidance.
+
+Requests require an existing account session, have size/concurrency limits, and are limited to 60 per account per 15 minutes. No queries or personal profile data are stored in the shared legal index. Source text is sent to Google Gemini for embeddings; retrieved passages, recent chat, and profile context are sent for answer generation. This change moves **chat** generation calls server-side; other existing document/report AI features retain their current configuration.
+
+Local source documents, credentials, and generated indexes are gitignored. Back up the corpus and index separately on the deployment server. The corpus is shared across signed-in accounts, so do not add private case files to it.
+
+Validation: `npm run test:rag`, `npm run test:auth`, `node --test tests/*.test.cjs`, and `npx tsc --noEmit`.
+
+### Import source links
+
+Run `npm run rag:fetch` to download explicit URLs from `src/legal_knowlege/manifest.json` and supplemental direct links in `server/rag/source-links.json`. Then run `npm run rag:index` to embed the imported text. The importer extracts HTML content, accepts PDFs/text, limits download size and time, checks redirects, and skips generic homepages, code overviews, and detected access-block pages. It does not crawl entire websites, execute JavaScript, or fetch all documents linked from an index page.
+
+Downloads and provenance sidecars are saved under `src/legal_knowlege/imported/`; the originals in the catalog are preserved. Each indexed passage includes its source URL and retrieval date. Retrieval dates are not verification of legal currency. Review extracted content before relying on it; directory/index pages remain directory/index content, not the full statutes they link to. Imported content is untrusted data for the answer generator.
+
+Check `server/private/source-import-report.json` for downloaded, failed, and needs-specific-url results. For blocked or missing pages, supply a direct accessible document URL or upload the document manually. Failed refreshes retain previous downloads; to retire a source, remove its downloaded file and sidecar, remove its catalog URL, then rebuild. Unchanged download content retains its provenance date to reuse embeddings. Run `python3 scripts/test-fetch-legal-sources.py` to test the importer.
+
+Catalog entries can set `local_file` to a path relative to `src/legal_knowlege/`. The fetcher validates that the file exists and reports `supplied-locally` instead of retrying its remote URL. Uploaded Palo Alto code is stored under `01_Laws_and_Regulations/`, and Santa Clara civil court rules under `02_Court_Procedures_and_Explanations/`, each with a provenance sidecar.
+
+### Migrating the RAG index to Gemini
+
+Set `GEMINI_API_KEY` in `server/.env`, run `npm run rag:index`, and restart the API. The old OpenAI index remains at `server/private/legal-index.sqlite3`; Gemini uses `server/private/legal-index-gemini.sqlite3`. All passages must be embedded with Gemini before retrieval can use them. The old vectors are never mixed with Gemini vectors. A failed rebuild preserves the previous complete Gemini snapshot.
+
+RAG uses the existing `openai` npm package as a transport to Google's documented compatibility endpoint; it sends RAG requests to Google, not OpenAI. The key stays server-side. Document extraction and condensed-report generation are separate existing features and still use `EXPO_PUBLIC_OPENAI_API_KEY`; this migration covers RAG chat and indexing.
+
+### Text search when embeddings are unavailable
+
+`npm run rag:index:text` builds a local SQLite full-text index without an API key or embedding quota. `npm run rag:index` now publishes that text index before attempting vector embeddings. Chat uses text retrieval when the vector index is empty, vector search returns no matches, or embedding requests hit a 429 rate limit. Responses still use Gemini and include retrieved citations. Text retrieval uses stemming and keyword relevance; it does not provide the same multilingual or semantic matching as vector search. Re-run indexing after changing source files. An empty index is reported as a setup issue rather than missing legal evidence.

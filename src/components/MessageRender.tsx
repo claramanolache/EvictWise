@@ -163,6 +163,7 @@ export default function MessageRender({
 
   const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
   const translationRequest = useRef(0);
+  const [sourcesVisible, setSourcesVisible] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
   const [hoveredAction, setHoveredAction] = useState("");
 
@@ -356,6 +357,16 @@ export default function MessageRender({
             {t(translationError)}
           </Text>
         )}
+
+        {!!msg.sources?.length && <View style={{ marginTop: 12 }}>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: sourcesVisible }} onPress={() => setSourcesVisible(!sourcesVisible)}>
+            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{t("legalSources")} ({msg.sources.length}) {sourcesVisible ? "⌃" : "⌄"}</Text>
+          </Pressable>
+          {sourcesVisible && msg.sources.map(source => <View key={source.id} style={{ marginTop: 10, padding: 10, borderWidth: 1, borderColor: theme.border, borderRadius: 8 }}>
+            <Text selectable style={{ color: theme.textHeading, fontSize: 12 }}>[{source.id}] {source.file} · {source.page ? `${t("sourcePage")} ${source.page}` : `${t("sourcePassage")} ${source.part}`}</Text>
+            <Text selectable style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 6 }}>{source.excerpt}</Text>
+          </View>)}
+        </View>}
 
         {/* Assistant disclaimer */}
         {msg.role === "assistant" && (

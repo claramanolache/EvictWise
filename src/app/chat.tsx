@@ -15,14 +15,13 @@ import {
 } from "react-native";
 import { getTheme, Fonts } from "@/constants/theme";
 import Layout from "@/components/Layout";
-import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
-import OpenAI from "openai";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { chatRequest } from "@/auth/api";
 import { Message, serializeMessages } from "@/types";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { addMessage } from "@/slice";
 import MessageRender from "@/components/MessageRender";
-import { systemPrompt } from "@/constants/assistantAI/prompt";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function Index() {
@@ -86,15 +85,6 @@ export default function Index() {
   useLayoutEffect(resizeWebInput, [inputText, width]);
 
 
-  const openai = useMemo(
-    () =>
-      new OpenAI({
-        apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true,
-      }),
-    [],
-  );
-
   const sendMessage = async () => {
     if (!inputText.trim() || submitting.current) return;
     submitting.current = true;
@@ -113,27 +103,20 @@ export default function Index() {
     setLoading(true);
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          { role: "user", content: buildChatProfileContext(profile) },
-          ...serializeMessages([...messages, userMessage]),
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
+      const history = serializeMessages([...messages, userMessage]).slice(-20);
+      // Keep the newest conversation within the server's context budget.
+      while (history.length > 1 && JSON.stringify(history).length > 28000) history.shift();
+      const response = await chatRequest({
+        messages: history,
+        profileContext: buildChatProfileContext(profile).slice(0, 24000),
       });
 
       const assistantMessage: Message = {
         type: "chat",
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content:
-          response.choices[0]?.message?.content ||
-          "No response received from AI",
+        content: response.content,
+        sources: response.sources,
       };
       dispatch(addMessage(assistantMessage));
     } catch (err) {

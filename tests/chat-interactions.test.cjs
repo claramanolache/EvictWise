@@ -27,7 +27,7 @@ function setup(messages = []) {
     '@/utils/chatProfileContext': { buildChatProfileContext: () => 'profile context' },
     '@/constants/assistantAI/prompt': { systemPrompt: 'original system prompt' },
     '@/types': { serializeMessages: messages => messages }, '@/slice': { addMessage: message => message },
-    openai: class { chat = { completions: { create: request => new Promise((resolve, reject) => requests.push({ request, resolve, reject })) } }; },
+    '@/auth/api': { chatRequest: request => new Promise((resolve, reject) => requests.push({ request, resolve, reject })) },
   };
   const exports = {};
   const code = ts.transpileModule(fs.readFileSync(require.resolve('../src/app/chat.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -53,9 +53,9 @@ test('Enter submits once with original profile context; Shift+Enter and IME pres
   key(input, {});
   assert.equal(h.requests.length, 1);
   assert.equal(h.sent[0].content, 'My follow-up');
-  assert.equal(h.requests[0].request.messages[1].content, 'profile context');
+  assert.equal(h.requests[0].request.profileContext, 'profile context');
   assert.equal(h.render().get('TextInput').props.editable, false);
-  h.requests[0].resolve({ choices: [{ message: { content: '**Unchanged response**' } }] });
+  h.requests[0].resolve({ content: '**Unchanged response**', sources: [] });
   await new Promise(setImmediate);
   assert.equal(h.sent[1].content, '**Unchanged response**');
   assert.equal(h.render().get('TextInput').props.editable, true);

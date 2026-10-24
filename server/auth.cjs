@@ -96,6 +96,14 @@ function createAuthRouter({ databasePath = process.env.AUTH_DATABASE_PATH || pat
       res.status(500).json({ error: 'authUnavailable' });
     } finally { hashing--; }
   });
+  const chatHandler = require('./rag/chat.cjs').createChatHandler();
+  router.post('/chat', (req, res, next) => {
+    const account = user(req);
+    if (!account) return res.status(401).json({ error: 'Please sign in to use chat.' });
+    if (!allowedAttempt('chat:' + account.id, 60)) return res.status(429).json({ error: 'Chat limit reached. Please try again later.' });
+    req.accountId = account.id;
+    next();
+  }, chatHandler);
   return { router, close: () => db.close() };
 }
 module.exports = { createAuthRouter };

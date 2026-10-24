@@ -146,3 +146,10 @@ ios
 
 # Private account hashes, session records, and database journals
 server/private/
+
+# Locally supplied RAG corpus (may contain private material)
+src/legal_knowlege/
+
+# Python importer cache
+__pycache__/
+*.pyc
