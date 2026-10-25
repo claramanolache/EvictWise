@@ -6,7 +6,7 @@ export type ErrorMessage = {
   error: string;
 };
 
-export type ChatSource = { id: string; title?: string; url?: string | null; file: string; page: number | null; part: number; excerpt: string };
+export type ChatSource = { id: string; title?: string; url?: string | null; jurisdiction?: string | null; file: string; page: number | null; part: number; excerpt: string };
 
 export type ChatMessage = {
   type: "chat";

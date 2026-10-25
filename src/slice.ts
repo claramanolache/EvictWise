@@ -9,6 +9,7 @@ export interface LocationData {
   city: string;
   state: string;
   zipCode?: string;
+  county?: string;
 }
 
 export interface State {

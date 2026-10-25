@@ -8,7 +8,7 @@ function sourceFromRow(row, index) {
     const parsed = new URL(candidate);
     if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) url = parsed.href;
   } catch { /* Locally supplied sources may not have an online original. */ }
-  return { id: `S${index+1}`, title, url, file: row.file, page: row.page, part: row.part, excerpt: row.text };
+  return { id: `S${index+1}`, title, url, jurisdiction: header.match(/^Jurisdiction: (.+)$/m)?.[1] || null, file: row.file, page: row.page, part: row.part, excerpt: row.text };
 }
 function addCitationLinks(content, sources) {
   const byId = new Map(sources.map(source=>[source.id,source]));

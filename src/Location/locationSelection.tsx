@@ -57,6 +57,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                     city: address.city || address.town || address.village || address.county || 'Unknown City', 
                     state: address.state || address.region || 'Unknown State',
                     zipCode: address.postcode || '',
+                    county: address.county || '',
                 };
                 setSelectedLocation(locationData);
                 setSelectionMode('confirm');
@@ -98,6 +99,7 @@ const LocationSelection: React.FC<LocationSelectionProps> = ({ size = 'normal', 
                 city: item.address?.city || item.address?.town || item.address?.village || item.name || 'Unknown',
                 state: item.address?.state || item.address?.region || '',
                 country: item.address?.country || '',
+                county: item.address?.county || '',
             }));
 
             const uniqueSuggestions = Array.from(new Set(newSuggestions.map(s => JSON.stringify(s))))

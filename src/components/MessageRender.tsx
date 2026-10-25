@@ -374,6 +374,7 @@ export default function MessageRender({
           </Pressable>
           {sourcesVisible && msg.sources.map(source => <View key={source.id} style={{ marginTop: 10, padding: 10, borderWidth: 1, borderColor: theme.border, borderRadius: 8 }}>
             <Text selectable style={{ color: theme.textHeading, fontSize: 12 }}>[{source.id}] {source.title || source.file} · {source.page ? `${t("sourcePage")} ${source.page}` : `${t("sourcePassage")} ${source.part}`}</Text>
+            {source.jurisdiction && <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>{source.jurisdiction}</Text>}
             {source.url && <Markdown style={themeToMarkdown(theme)} onLinkPress={url => url === source.url && url.startsWith("https://")}>
               {`[${source.url.replace(/[\[\]]/g, "")}](${"<" + source.url.replace(/</g, "%3C").replace(/>/g, "%3E") + ">"})`}
             </Markdown>}

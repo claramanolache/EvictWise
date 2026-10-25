@@ -18,7 +18,7 @@ async function rebuildTextIndex(db, root = KNOWLEDGE_PATH, records = null) {
 function hasTextIndex(db) {
   return !!db.prepare("SELECT name FROM sqlite_master WHERE name='legal_text'").get() && db.prepare('SELECT COUNT(*) AS count FROM legal_text').get().count > 0;
 }
-function searchText(db, query, limit = 6) {
+function searchText(db, query, limit = 6, filter = () => true) {
   if (!hasTextIndex(db)) return [];
   const stop = new Set('a an the i you can could would should do does did how what when where why is are was were be been to of for in on it this that my me user assistant'.split(' '));
   const terms = [...new Set((query.toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]).filter(word=>word.length>2 && !stop.has(word)))].slice(0,40);
@@ -27,6 +27,6 @@ function searchText(db, query, limit = 6) {
   const alternatives = terms.map(term=>'"'+term+'"').join(' OR ');
   const topic = terms.find(term => /^evict/.test(term));
   const expression = topic ? '"'+topic+'" AND ('+alternatives+')' : alternatives;
-  return db.prepare('SELECT id,file,page,part,text,bm25(legal_text) AS score FROM legal_text WHERE legal_text MATCH ? ORDER BY score LIMIT ?').all(expression,limit);
+  return db.prepare('SELECT id,file,page,part,text,bm25(legal_text) AS score FROM legal_text WHERE legal_text MATCH ? ORDER BY score').all(expression).filter(filter).slice(0,limit);
 }
 module.exports = { rebuildTextIndex, hasTextIndex, searchText };

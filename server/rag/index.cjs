@@ -140,12 +140,12 @@ async function rebuild({ db, root = KNOWLEDGE_PATH, embedTexts, model = MODEL, r
   } catch (error) { db.exec('ROLLBACK'); throw error; }
   return { files: new Set(records.map(row => row.file)).size, chunks: records.length, embedded };
 }
-function search(db, vector, { model = MODEL, limit = 6, minScore = 0.25 } = {}) {
+function search(db, vector, { model = MODEL, limit = 6, minScore = 0.25, filter = () => true } = {}) {
   const settings = Object.fromEntries(db.prepare('SELECT * FROM settings').all().map(row => [row.key,row.value]));
   if (settings.model !== model) throw new Error('Embedding model changed. Rebuild the legal index.');
   validateVector(vector, Number(settings.dimension));
   const norm = Math.hypot(...vector);
-  return db.prepare('SELECT * FROM chunks').all().map(row => {
+  return db.prepare('SELECT * FROM chunks').all().filter(filter).map(row => {
     const stored = validateVector(JSON.parse(row.vector), vector.length);
     const score = stored.reduce((sum,n,i) => sum + n * vector[i], 0) / (norm * Math.hypot(...stored));
     const { vector: ignored, ...source } = row;
