@@ -62,7 +62,7 @@ New visitors see a three-step welcome flow:
 
 After registration or sign-in, **Profile** is the first app screen. The root `/` route also redirects to Profile; chat is now `/chat`. Protected routes are unavailable while signed out. Profile shows the username and a Sign out action. The old starter-menu component is retained under `src/components/StarterMenu.tsx` rather than exposed as a route.
 
-On the first Profile visit for an account on this browser, a guided tour displays pointer bubbles over the upload button and navigation menu. It explains uploading the eviction notice and lease, profile/supporting files and the condensed report, Chat/Translate, Calendar/checklist, and Lawyer Connect. The tour opens the menu for its navigation steps, tracks the highlighted controls as the layout changes, and returns to the upload button at the end. Use Next, Back, Skip tour, or Start planning. Completing or skipping stores `firstTime: false` in the account's local profile, so it does not repeat on later visits in the same browser. The text follows the selected language.
+On the first Profile visit for an account on this browser, a guided tour displays pointer bubbles over the upload button and navigation menu. It explains uploading the eviction notice and lease, profile/supporting files and the case summary, Chat/Translate, Calendar/checklist, and Lawyer Connect. The tour opens the menu for its navigation steps, tracks the highlighted controls as the layout changes, and returns to the upload button at the end. Use Next, Back, Skip tour, or Start planning. Completing or skipping stores `firstTime: false` in the account's local profile, so it does not repeat on later visits in the same browser. The text follows the selected language.
 
 Usernames are case-insensitive and use 3–32 letters, numbers, or underscores. New passwords require 9–128 characters, allow spaces and Unicode, and are never truncated. Account recovery/password reset and email verification are not implemented; keep the credentials available.
 
@@ -85,7 +85,7 @@ The hamburger menu contains **Chat**, **Profile**, **Calendar**, and **Lawyer Co
 
 The compact top-right switch changes light/dark mode. The app initially follows the system theme unless a saved preference exists. Shared colors, spacing, and fonts live in `src/constants/theme.ts`; theme state is managed by `ThemeContext.tsx`.
 
-The Documents implementation is preserved in `src/screens/Documents.tsx`, but it is not an app route or menu destination. Document access and condensed information are available on Profile.
+The Documents implementation is preserved in `src/screens/Documents.tsx`, but it is not an app route or menu destination. Document access and case summary are available on Profile.
 
 ### Chat
 
@@ -106,7 +106,7 @@ Supported choices are English, Spanish, French, German, Italian, Portuguese, Rom
 
 The client posts to `/api/translate` on the Express service, which calls Google Cloud Translation with server-side credentials. Interface strings are translated in a batch and cached by language and interface version. Failed interface requests fall back to English. Message failures keep the original content and show a translation error.
 
-Selecting a translation language saves it as **Preferred language** in the user profile, displayed under Your Information. On reload, the saved language applies to the interface and conversation automatically. Existing browser-only language preferences are migrated into the profile. Selecting Translate still opens the language picker each time. Interface caches are saved when browser storage is available. Stored documents and extracted task names are not automatically rewritten into the selected language. The condensed report is displayed in the preferred language, while its saved source and download remain English.
+Selecting a translation language saves it as **Preferred language** in the user profile, displayed under Your Information. On reload, the saved language applies to the interface and conversation automatically. Existing browser-only language preferences are migrated into the profile. Selecting Translate still opens the language picker each time. Interface caches are saved when browser storage is available. Stored documents and extracted task names are not automatically rewritten into the selected language. The case summary is displayed in the preferred language, while its saved source and download remain English.
 
 ### Profile and document uploads
 
@@ -126,11 +126,18 @@ Canceling or failing processing preserves the existing document and deadlines. P
 
 The viewer previews supported originals on web and provides open/share or download actions appropriate to the platform. If an original is unavailable, extracted text remains available when present; re-upload to restore the original preview.
 
-**Additional information** accepts multiple files of any type without an app-imposed count or size limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. In profile edit mode, an × button beside each additional file removes its saved original and profile entry. If deletion fails, the entry stays available for retry. The condensed report updates automatically after removal. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
+**Additional information** accepts multiple files of any type without an app-imposed count or size limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. In profile edit mode, an × button beside each additional file removes its saved original and profile entry. If deletion fails, the entry stays available for retry. The case summary updates automatically after removal. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
 
-### Condensed user information
+### Case summary
 
-The separate **Condensed user info** box below Your Information contains a downloadable/shareable `condensed-user-info.txt` report:
+The separate **Case summary** box below Your Information contains a downloadable/shareable report. Download opens a choice:
+
+- **All case information (ZIP):** downloads `all-case-info.zip`, with `0000-case-summary.txt` first, then original eviction notice, lease agreement, and additional uploads in numbered entries. Original file bytes and languages are preserved. Numbered, sanitized filenames prevent duplicate names from overwriting one another and keep the summary first when sorted by name. If an original is missing (including older uploads without a saved original), the app identifies the file and stops the ZIP export; re-upload it or choose summary only.
+- **Case summary only:** downloads/shares the canonical English `case-summary.txt`.
+
+The archive is assembled locally without uploading files to a server. Web downloads through the browser; Android/iOS use `expo-sharing` with a temporary ZIP removed after sharing. Custom native development builds need rebuilding after installing this dependency. Export size is constrained by available device memory and the standard ZIP limits (under 4 GiB and at most 65,535 entries, including the summary).
+
+The summary contains:
 
 ```text
 User Name:
@@ -165,7 +172,7 @@ The **Priority checklist** sits beside the calendar when enough content width is
 - Unfinished tasks appear first, ordered by deadline; overdue dates naturally come first.
 - Each task has a checkbox and its deadline in smaller, muted text beside it.
 - Checking a task crosses it out and moves it below unfinished tasks. Tap again to undo.
-- Completion is saved separately from events, so checking a task does not remove its calendar date or alter the condensed report.
+- Completion is saved separately from events, so checking a task does not remove its calendar date or alter the case summary.
 - Replacing/removing a document's events removes their old completion markers. Newly extracted events start incomplete.
 
 Notification scheduling helpers exist in `src/events/notifications.ts`, but are not currently wired into the screens or providers. The calendar/checklist does not automatically send reminders.
@@ -225,7 +232,7 @@ This is a local directory database, separate from user profile storage. The buil
 | Theme and language preferences | Browser localStorage when available (`preferred-theme`, `preferred-language`). |
 | Translated interface strings | Versioned per-language localStorage entries; message translations remain component state. |
 | Chat, document image transcription, deadline extraction, report generation | Sent to OpenAI from the client as needed. |
-| Translation text, interface strings, and condensed report display/English normalization | Sent through the Express API to Google Cloud Translation. |
+| Translation text, interface strings, and case summary display/English normalization | Sent through the Express API to Google Cloud Translation. |
 
 Accounts are stored on the server, but case profiles and original documents are still local: there is no cloud synchronization for case data. Profile storage is separated by account in the app; localStorage and IndexedDB are not encrypted and remain accessible to someone with access to that browser/device. Legacy unowned `persist:app` data is left intact and is not automatically imported into a new account. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native metadata persistence is not configured with an AsyncStorage adapter; the existing Redux persistence adapter targets web storage, so cross-launch native persistence should not be assumed.
 
@@ -242,7 +249,7 @@ Accounts are stored on the server, but case profiles and original documents are 
 | `src/context/GuidedTourContext.tsx` | First-visit pointer bubbles, target measurement, menu guidance, and completion state. |
 | `src/context/AuthContext.tsx`, `src/auth/api.ts` | Session restoration, authentication, and logout. |
 | `server/auth.cjs` | Private account database, scrypt password hashing, sessions, and throttling. |
-| `src/app/profile.tsx` | Profile information, upload/view actions, and condensed report placement. |
+| `src/app/profile.tsx` | Profile information, upload/view actions, and case summary placement. |
 | `src/app/calendar.tsx` | Calendar grid, selected-day details, responsive checklist placement. |
 | `src/app/lawyer-connect.tsx` | Local legal-help organization cards from the generated dataset and contact actions. |
 | `src/components/Layout.tsx` | Responsive sidebar, header, and theme toggle. |

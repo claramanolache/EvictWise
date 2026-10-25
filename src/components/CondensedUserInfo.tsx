@@ -1,23 +1,32 @@
+import { buildCaseArchive, MissingCaseFileError } from "@/utils/caseArchive";
+import { readOriginalFileBytes } from "@/utils/documentFiles";
+import { downloadCaseArchive } from "@/utils/downloadCaseArchive";
+import type { RootState } from "@/store";
+import type { FileData } from "@/types";
 import ThemedPressable from "@/components/ThemedPressable";
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { englishReportEdits } from "@/utils/reportTranslation";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { updateUserInfoEdits } from "@/slice";
 import { REPORT_FIELDS, readReportFields, ReportValues, ReportEdits } from "@/utils/condensedInfoEdits";
 import { useCondensedInfo } from "@/context/CondensedInfoContext";
-import { Platform, Pressable, Share, Text, TextInput, View, } from "react-native";
+import { Modal, Platform, Pressable, Share, Text, TextInput, View, } from "react-native";
 import { getTheme } from "@/constants/theme";
 import { useTranslation } from "@/Translation/TranslationContext";
 
-const fileName = "condensed-user-info.txt";
+const fileName = "case-summary.txt";
 
 export default function CondensedUserInfo() {
   const { t, language, translateMessage } = useTranslation();
   const theme = getTheme(useColorScheme());
-  const { currentReport, busy, failed, setFailed } = useCondensedInfo();
+  const { currentReport, busy, failed } = useCondensedInfo();
 
   const dispatch = useDispatch();
+  const { evictionNotice, leaseAgreement, additionalFiles } = useSelector((state: RootState) => state.app);
+  const [downloadPrompt, setDownloadPrompt] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<{ missingFile?: string } | null>(null);
   const [draft, setDraft] = useState<ReportValues | null>(null);
   const [baseline, setBaseline] = useState<ReportValues | null>(null);
   const [saving, setSaving] = useState(false);
@@ -65,11 +74,16 @@ export default function CondensedUserInfo() {
     } finally { setSaving(false); }
   }
 
-  async function download() {
-    if (!currentReport) return;
-    setFailed(false);
+  async function download(allCaseInfo = false) {
+    if (!currentReport || downloading || busy) return;
+    setDownloadError(null);
+    setDownloading(true);
     try {
-      if (Platform.OS === "web") {
+      if (allCaseInfo) {
+        const files = [evictionNotice, leaseAgreement, ...(additionalFiles ?? [])].filter((file): file is FileData => Boolean(file));
+        const bytes = await buildCaseArchive(currentReport, files, readOriginalFileBytes);
+        await downloadCaseArchive(bytes);
+      } else if (Platform.OS === "web") {
         const url = URL.createObjectURL(new Blob([currentReport], { type: "text/plain;charset=utf-8" }));
         const link = document.createElement("a");
         link.href = url;
@@ -87,9 +101,10 @@ export default function CondensedUserInfo() {
           ? { title: fileName, url: file.uri }
           : { title: fileName, message: currentReport });
       }
-    } catch {
-      setFailed(true);
-    }
+      setDownloadPrompt(false);
+    } catch (error) {
+      setDownloadError(error instanceof MissingCaseFileError ? { missingFile: error.fileName } : {});
+    } finally { setDownloading(false); }
   }
 
   return (
@@ -138,9 +153,31 @@ export default function CondensedUserInfo() {
           </ThemedPressable>
         </>
       )}
-      {currentReport && !draft && <Pressable accessibilityRole="button" onPress={download} style={{ padding: 12 }}>
+      {currentReport && !draft && <Pressable accessibilityRole="button" disabled={busy || downloading} onPress={() => { setDownloadError(null); setDownloadPrompt(true); }} style={{ padding: 12 }}>
         <Text style={{ color: theme.text }}>{t("downloadUserInfo")}</Text>
       </Pressable>}
+      {downloadPrompt && <Modal visible transparent animationType="fade" onRequestClose={() => { if (!downloading) setDownloadPrompt(false); }}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24, backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <View accessibilityViewIsModal style={{ width: "100%", maxWidth: 480, padding: 24, gap: 16, borderRadius: 16, backgroundColor: theme.backgroundSecondary }}>
+            <Text accessibilityRole="header" style={{ color: theme.textHeading, fontSize: 20, fontWeight: "600" }}>{t("caseDownloadTitle")}</Text>
+            <Text style={{ color: theme.textSecondary, lineHeight: 22 }}>{t("caseDownloadHelp")}</Text>
+            <ThemedPressable accessibilityRole="button" disabled={downloading || busy} onPress={() => download(true)} style={{ padding: 12, borderRadius: 8 }}>
+              <Text style={{ color: theme.textOnAccent }}>{t("caseDownloadAll")}</Text>
+            </ThemedPressable>
+            <ThemedPressable accessibilityRole="button" disabled={downloading || busy} onPress={() => download(false)} style={{ padding: 12, borderRadius: 8 }}>
+              <Text style={{ color: theme.textOnAccent }}>{t("caseDownloadSummary")}</Text>
+            </ThemedPressable>
+            {downloading && <Text accessibilityLiveRegion="polite" style={{ color: theme.textSecondary }}>{t("caseDownloadPreparing")}</Text>}
+            {downloadError && <View style={{ gap: 6 }}>
+              <Text accessibilityRole="alert" style={{ color: theme.textWarning }}>{t(downloadError.missingFile ? "caseDownloadMissing" : "caseDownloadFailed")}</Text>
+              {downloadError.missingFile && <Text style={{ color: theme.textWarning }}>{downloadError.missingFile}</Text>}
+            </View>}
+            <Pressable accessibilityRole="button" disabled={downloading} onPress={() => setDownloadPrompt(false)} style={{ padding: 12 }}>
+              <Text style={{ color: theme.text }}>{t("cancel")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>}
       {failed && <Text accessibilityRole="alert" style={{ color: theme.textWarning, backgroundColor: theme.backgroundError, padding: 12, borderRadius: 8 }}>{t("userInfoFailed")}</Text>}
     </View>
   );

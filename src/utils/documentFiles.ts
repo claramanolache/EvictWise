@@ -70,3 +70,16 @@ export async function removeOriginalFile(id: string): Promise<void> {
     });
   } finally { db.close(); }
 }
+
+export async function readOriginalFileBytes(id: string): Promise<Uint8Array> {
+  if (Platform.OS !== "web") {
+    const { File } = await import("expo-file-system");
+    return new File(id).bytes();
+  }
+  const url = await loadOriginalFile(id);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Original file unavailable");
+    return new Uint8Array(await response.arrayBuffer());
+  } finally { URL.revokeObjectURL(url); }
+}

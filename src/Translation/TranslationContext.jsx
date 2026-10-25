@@ -84,7 +84,7 @@ const ENGLISH_INTERFACE = {
   tourUploadBody: "Use this button to edit your profile. Add your location, then select the Eviction Notice and Lease Agreement rows to upload a PDF or image. Choose Done when you finish.",
   tourMenuTitle: "Your app menu",
   tourMenuBody: "Use this menu button to move between Profile, Chat, Calendar, and Lawyer Connect. Let’s take a quick look at each one.",
-  tourProfileBody: "Keep your documents and location here. Add supporting files under Additional information, or remove them in edit mode. After both main documents are uploaded, your condensed report appears below. It updates automatically, displays in your language, and downloads in English.",
+  tourProfileBody: "Keep your documents and location here. Add supporting files under Additional information, or remove them in edit mode. After both main documents are uploaded, your case summary appears below. It updates automatically, displays in your language, and downloads in English.",
   tourChatBody: "Ask questions about your notice, lease, or next steps. The assistant uses your saved information and may ask follow-up questions. Translate lets you choose a language for the conversation. Always verify important legal information.",
   tourCalendarBody: "See deadlines extracted from your documents. Select a day for its details, and check off completed tasks in the priority checklist. Review the extracted dates against your documents.",
   tourLawyersBody: "Open Local legal help to see organizations, counties served, services, and contact details. Contact an organization directly to confirm whether it can help with your case.",
@@ -180,7 +180,7 @@ const ENGLISH_INTERFACE = {
   lawyerConnectDescription: "Browse the supplied legal-help organizations below. Review their counties, services, and contact information. Contact an organization directly to confirm availability.",
   lawyerLegalAidDescription: "Search by city or address for a legal aid organization that helps with civil legal problems.",
   lawyerReferralDescription: "Explore lawyer referral services, free legal help, and state lawyer licensing resources.",
-  lawyerReviewProfile: "Review your profile and condensed information",
+  lawyerReviewProfile: "Review your profile and case summary",
   lawyerOpenDirectory: "Open directory",
   lawyerLinkFailed: "Could not open the directory. Please try again.",
   calendarEventsFor: "Events for",
@@ -204,7 +204,14 @@ const ENGLISH_INTERFACE = {
   evictionNoticeLabel: "Eviction Notice:",
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
-  condensedUserInfo: "Condensed user info",
+  caseDownloadTitle: "What would you like to download?",
+  caseDownloadHelp: "Download the English case summary alone, or a ZIP with the summary first, followed by your eviction notice, lease agreement, and additional uploaded files.",
+  caseDownloadSummary: "Case summary only",
+  caseDownloadAll: "All case information (ZIP)",
+  caseDownloadPreparing: "Preparing your download…",
+  caseDownloadMissing: "An uploaded original could not be included. No ZIP was downloaded. Re-upload this file and try again, or download the case summary only:",
+  caseDownloadFailed: "Could not prepare or save the download. Please try again, or choose case summary only.",
+  condensedUserInfo: "Case summary",
   condensedInfoDescription: "This file updates automatically when your profile or chat conversation changes. Only new case-relevant details and evidence reported by you appear under Additional Info (from chatbox conversation). Review the extracted information before sharing. Missing details are marked Not provided.",
   editCondensedInfo: "Edit information",
   saveCondensedEdits: "Save changes",
@@ -312,7 +319,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v39-${language}`;
+    const cacheKey = `interface-v42-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
