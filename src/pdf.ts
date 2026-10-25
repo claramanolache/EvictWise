@@ -26,9 +26,14 @@ interface LineData {
  * @param outputDir Directory where extracted images will be saved.
  */
 export async function parsePdfToMarkdown(file: Blob): Promise<string> {
+  if (file.size > 20 * 1024 * 1024) throw new Error("documentTooLarge");
   const data = await file.arrayBuffer();
-  const loadingTask = getDocument({ data });
+  const loadingTask = getDocument({ data, isEvalSupported: false, maxImageSize: 16000000 });
+  const timer = setTimeout(() => { void loadingTask.destroy(); }, 20000);
+  try {
   const pdf = await loadingTask.promise;
+  if (pdf.numPages > 100) throw new Error("documentTooLarge");
+  let totalChars = 0;
 
   const allFontSizes: number[] = [];
   const pagesLines: LineData[][] = [];
@@ -37,7 +42,9 @@ export async function parsePdfToMarkdown(file: Blob): Promise<string> {
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
-    const items = textContent.items as any[];
+    const items = textContent.items.filter((item: any) => typeof item.str === "string" && Array.isArray(item.transform)) as any[];
+    totalChars += items.reduce((sum, item) => sum + item.str.length, 0);
+    if (items.length > 10000 || totalChars > 150000) throw new Error("documentTooLarge");
 
     // Extract text items
     const mapped: TextItemWithFontSize[] = items.map((item) => {
@@ -133,5 +140,8 @@ export async function parsePdfToMarkdown(file: Blob): Promise<string> {
     mdLines.push("");
   }
 
-  return mdLines.join("\n");
+  const result = mdLines.join("\n");
+  if (result.length > 180000) throw new Error("documentTooLarge");
+  return result;
+  } finally { clearTimeout(timer); await loadingTask.destroy(); }
 }

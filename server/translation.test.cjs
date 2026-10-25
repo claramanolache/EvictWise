@@ -90,3 +90,20 @@ test('API routing and parser errors are JSON, and Unicode requests fit the conte
   assert.equal(typeof (await response.json()).error,'string');
  }
 });
+
+test('production web export and API share HTTPS enforcement and distinct CSP policies', async t => {
+  const directory=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'evictwise-web-'));
+  fs.writeFileSync(path.join(directory,'index.html'),'<html><script>window.example=true;</script><body>Evict Wise</body></html>');
+  t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+  const {app}=loadServer({NODE_ENV:'production',TRUST_PROXY_HOPS:'1',WEB_DIST:directory,CLIENT_ORIGIN:'https://example.test'});
+  const url=await serve(t,app);
+  assert.equal((await fetch(url)).status,400);
+  const response=await fetch(url,{headers:{'X-Forwarded-Proto':'https'}});
+  assert.equal(response.status,200);
+  assert.match(await response.text(),/Evict Wise/);
+  assert.match(response.headers.get('content-security-policy'),/script-src 'self' 'sha256-/);
+  assert.equal(response.headers.get('x-frame-options'),'DENY');
+  assert.equal(response.headers.get('x-powered-by'),null);
+  const api=await fetch(url+'/api/health',{headers:{'X-Forwarded-Proto':'https'}});
+  assert.match(api.headers.get('content-security-policy'),/default-src 'none'/);
+});

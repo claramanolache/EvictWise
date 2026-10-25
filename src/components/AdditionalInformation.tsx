@@ -43,7 +43,7 @@ export default function AdditionalInformation({ onView, isEditing = false }: { o
     setPickerFailed(false);
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", multiple: true, copyToCacheDirectory: true, base64: false,
+        type: ["application/pdf", "image/jpeg", "image/png", "image/webp"], multiple: true, copyToCacheDirectory: true, base64: false,
       });
       if (result.canceled) return;
       // Store separately so a failed file doesn't discard successful uploads.

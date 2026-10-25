@@ -52,7 +52,7 @@ export default function DocumentViewer({ file, onClose }: { file: FileData; onCl
         {url && Platform.OS === "web" && <a href={url} download={file.name}>{t("downloadOriginalDocument")}</a>}
         {url && Platform.OS === "web" && file.mimeType === "application/pdf" ? (
           <>
-            <iframe title={file.name} src={url} style={{ width: "100%", flex: 1, border: 0, marginTop: 12 }} />
+            <iframe sandbox="allow-same-origin" referrerPolicy="no-referrer" title={file.name} src={url} style={{ width: "100%", flex: 1, border: 0, marginTop: 12 }} />
           </>
         ) : url && file.mimeType?.startsWith("image/") ? (
           <Image source={{ uri: url }} resizeMode="contain" style={{ flex: 1 }} accessibilityLabel={file.name} />

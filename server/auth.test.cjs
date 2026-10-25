@@ -97,3 +97,13 @@ test('RAG chat requires a session before accessing knowledge or generation', asy
   const h = await setup(t);
   assert.equal((await h.request('chat', { messages: [{ role: 'user', content: 'Help' }] })).status, 401);
 });
+
+ test('document AI requires authentication, validates payloads and rejects logged-out sessions', async t => {
+   const h = await setup(t);
+   assert.equal((await h.request('document-ai', { operation: 'events', text: 'hello' })).status, 401);
+   const signup = await h.request('register', { username: 'document_user', password });
+   const Cookie = signup.cookie.split(';')[0];
+   assert.equal((await h.request('document-ai', { operation: 'custom' }, { Cookie })).status, 400);
+   await h.request('logout', {}, { Cookie });
+   assert.equal((await h.request('document-ai', { operation: 'events', text: 'hello' }, { Cookie })).status, 401);
+ });

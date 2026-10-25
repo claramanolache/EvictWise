@@ -17,7 +17,7 @@ Use Node.js 22.13 or newer (the account service uses built-in `node:sqlite`), np
 2. Create `.env.local` in the project root:
 
    ```dotenv
-   EXPO_PUBLIC_OPENAI_API_KEY=your-development-key
+   # OPENAI_API_KEY belongs in server/.env only, never EXPO_PUBLIC_*
    # Optional; defaults to http://localhost:3001
    # EXPO_PUBLIC_TRANSLATION_API_URL=http://localhost:3001
    ```
@@ -126,7 +126,7 @@ Canceling or failing processing preserves the existing document and deadlines. P
 
 The viewer previews supported originals on web and provides open/share or download actions appropriate to the platform. If an original is unavailable, extracted text remains available when present; re-upload to restore the original preview.
 
-**Additional information** accepts multiple files of any type without an app-imposed count or size limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. In profile edit mode, an × button beside each additional file removes its saved original and profile entry. If deletion fails, the entry stays available for retry. The case summary updates automatically after removal. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
+**Additional information** accepts multiple PDF, JPEG, PNG, or WebP files without a file-count limit, with a 20 MB per-file limit. Device/browser storage still limits capacity. Successfully saved files remain available even if another file fails. In profile edit mode, an × button beside each additional file removes its saved original and profile entry. If deletion fails, the entry stays available for retry. The case summary updates automatically after removal. These attachments currently store originals and metadata with empty extracted text: they are **not automatically transcribed or analyzed**. Unsupported preview formats can be downloaded/opened externally.
 
 ### Case summary
 
@@ -253,7 +253,7 @@ This is a local directory database, separate from user profile storage. The buil
 
 Accounts are stored on the server, but case profiles and original documents are still local: there is no cloud synchronization for case data. Profile storage is separated by account in the app; localStorage and IndexedDB are not encrypted and remain accessible to someone with access to that browser/device. Legacy unowned `persist:app` data is left intact and is not automatically imported into a new account. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native Redux metadata now persists to account-specific files under the app-private document directory (`account-state/`) using the already installed Expo FileSystem. These files are not separately encrypted. Web case saves flush localStorage and report write failures rather than claiming success; native case saves flush the file adapter.
 
-**Development credential limitation:** OpenAI calls currently run in the client with `dangerouslyAllowBrowser: true`. `EXPO_PUBLIC_OPENAI_API_KEY` is bundled into the client and is visible to users, even if `.env.local` is ignored by Git. A production deployment needs authenticated server-side OpenAI calls and appropriate handling of uploaded personal information. Keep actual credentials, environment files, and logs out of commits.
+Document AI runs through authenticated `/api/auth/document-ai` endpoints. Set `OPENAI_API_KEY` in `server/.env`. Remove any old public key from local Expo configuration and rotate it if it was previously distributed. Keep credentials and logs out of commits.
 
 ## Code map
 
@@ -353,7 +353,7 @@ Catalog entries can set `local_file` to a path relative to `src/legal_knowlege/`
 
 Set `GEMINI_API_KEY` in `server/.env`, run `npm run rag:index`, and restart the API. The old OpenAI index remains at `server/private/legal-index.sqlite3`; Gemini uses `server/private/legal-index-gemini.sqlite3`. All passages must be embedded with Gemini before retrieval can use them. The old vectors are never mixed with Gemini vectors. A failed rebuild preserves the previous complete Gemini snapshot.
 
-RAG uses the existing `openai` npm package as a transport to Google's documented compatibility endpoint; it sends RAG requests to Google, not OpenAI. The key stays server-side. Document extraction and condensed-report generation are separate existing features and still use `EXPO_PUBLIC_OPENAI_API_KEY`; this migration covers RAG chat and indexing.
+RAG uses the existing `openai` npm package as a transport to Google's documented compatibility endpoint; it sends RAG requests to Google, not OpenAI. The key stays server-side. Document extraction and case summaries use the separate server-only `OPENAI_API_KEY`.
 
 ### Text search when embeddings are unavailable
 
@@ -378,3 +378,43 @@ RAG filters source passages before selecting the top results in both vector sear
 For the current California corpus, US federal sources apply across US locations; California sources apply within California; city and county sources require a matching city or county. An explicit mapping resolves counties for covered Bay Area cities and Los Angeles when older profiles lack county data. New location selections preserve the geocoder's county field. Unknown locations are not guessed. Sources labeled `See source`, missing jurisdiction labels, and out-of-area sources are excluded. Outside California, the current corpus can supply federal material only. The regional Bay Area directory is limited to the nine Bay Area counties.
 
 Scope comes from the `jurisdiction` field in source sidecars and is included in indexed provenance and displayed source details. Use labels such as `United States`, `California`, `Santa Clara County, California`, or `Palo Alto, California`; unsupported labels remain excluded. Update metadata and run `npm run rag:index:text` (and later `npm run rag:index` for vectors) after changes. Geographic filtering does not establish venue, case-type applicability, source currency, or whether a particular tenant qualifies for a rule.
+
+
+### Security and production web deployment
+
+Document AI requires a signed-in account, allows 40 calls/account per 15 minutes,
+and has a process-wide budget of 150 calls/15 minutes and three concurrent calls.
+Provider calls time out after 45 seconds with retries disabled. Error responses
+contain generic messages; server failure logs contain an event name and request ID,
+not document text, provider errors, or credentials.
+
+Public translation remains available for onboarding. It accepts supported app
+languages, up to 1,000 strings / 30,000 characters per request, four concurrent
+requests, 200,000 characters per IP / 15 minutes and 1,000,000 per server process.
+Each request costs at least 1,000 characters toward the quota. Provider timeout is
+15 seconds with retries disabled. For multiple API replicas, enforce a shared
+quota at the gateway and configure Google billing quotas; process limits reset on restart.
+
+Uploads retain the 20 MB limit and now check file signatures. PDFs are limited to
+100 pages, 150,000 extracted characters, 10,000 text items per page, and 20 seconds
+of processing; PDF JavaScript evaluation is disabled. These checks are not a malware
+scanner. PDF previews are sandboxed; the download link remains available if a
+browser blocks its built-in PDF viewer inside a sandbox.
+
+To deploy with the supplied web security headers:
+
+1. Build with `CI=1 npx expo export --platform web --output-dir dist`.
+   For same-origin hosting, omit public API URL overrides from the production build.
+2. Set `WEB_DIST` to the absolute `dist` directory, `NODE_ENV=production`, and
+   `CLIENT_ORIGIN=https://your-app-domain` in the server environment.
+3. Put Node behind an HTTPS reverse proxy. Set `TRUST_PROXY_HOPS` only to the exact
+   trusted proxy hop count and block direct public access to the Node port.
+4. Start `npm run server`. API and exported web pages now use the same origin.
+
+Production rejects insecure HTTP and sends HSTS, anti-framing, MIME-sniffing, and
+referrer protections. The web CSP permits bundled scripts and hashes of Expo's
+exported inline scripts, local PDF workers/blob previews, and the existing Nominatim
+location lookup. Inline styles remain permitted for React Native Web. Rebuild and
+restart after changing the export. Expo's development server does not receive these
+production hosting headers. If using a separate static host, configure equivalent
+headers there; API headers alone cannot protect the frontend.

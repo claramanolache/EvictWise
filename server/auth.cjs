@@ -96,6 +96,12 @@ function createAuthRouter({ databasePath = process.env.AUTH_DATABASE_PATH || pat
       res.status(500).json({ error: 'authUnavailable' });
     } finally { hashing--; }
   });
+  router.post('/document-ai', (req, res, next) => {
+    const account = user(req);
+    if (!account) return res.status(401).json({ error: 'Please sign in to process documents.' });
+    if (!allowedAttempt('document:' + account.id, 40)) return res.status(429).json({ error: 'Document limit reached. Try again later.' });
+    next();
+  }, express.json({ limit: '28mb' }), require('./document-ai.cjs').createDocumentHandler());
   const chatHandler = require('./rag/chat.cjs').createChatHandler();
   router.post('/chat', (req, res, next) => {
     const account = user(req);

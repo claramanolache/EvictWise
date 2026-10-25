@@ -39,7 +39,7 @@ function setup() {
       parseUserInfoDetails: JSON.parse,
       formatUserInfo: (details, location, events, conversation) => JSON.stringify({ details, location, conversation }),
     },
-    openai: class { chat = { completions: { create: (request, options) => new Promise(resolve => requests.push({ request, signal: options.signal, resolve })) } }; },
+    '@/auth/api': { documentRequest: (request, signal) => new Promise(resolve => requests.push({ request, signal, resolve })) },
   };
   const output = {};
   const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/context/CondensedInfoContext.tsx'), 'utf8'), {
@@ -56,7 +56,7 @@ function setup() {
   };
 }
 const settle = () => new Promise(setImmediate);
-const result = name => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ userName: name }) } }] });
+const result = name => JSON.stringify({ userName: name });
 
 test('initial report and location edits regenerate automatically; cached report does not loop', async () => {
   const h = setup(); h.render(); h.flushTimers(); await settle();
@@ -97,14 +97,14 @@ test('user answers and subsequent AI replies both refresh the globally mounted r
   assert.doesNotMatch(h.state.userInfoReport.text, /When was the notice served/);
   h.state.messages.push({ type: 'chat', role: 'user', content: 'October 12.' });
   h.render(); h.flushTimers();
-  const payload = JSON.parse(h.requests[0].request.messages[1].content);
+  const payload = JSON.parse(h.requests[0].request.text);
   assert.equal(payload.conversation[0].role, 'assistant');
   assert.equal(payload.conversation[1].content, 'October 12.');
   h.requests[0].resolve(result('User')); await settle();
   h.state.messages.push({ type: 'chat', role: 'assistant', content: 'Check the stated deadline with legal aid.' });
   h.render(); h.flushTimers();
   assert.equal(h.requests.length, 2);
-  h.requests[1].resolve({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ userName: 'User', chatHighlights: [{ userDetail: 'Notice served October 12.', aiAssessment: '' }] }) } }] }); await settle();
+  h.requests[1].resolve(JSON.stringify({ userName: 'User', chatHighlights: [{ userDetail: 'Notice served October 12.', aiAssessment: '' }] })); await settle();
   assert.match(h.state.userInfoReport.text, /October 12/);
   assert.doesNotMatch(h.state.userInfoReport.text, /Check the stated deadline/);
 });

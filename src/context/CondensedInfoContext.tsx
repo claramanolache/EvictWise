@@ -1,9 +1,8 @@
 import { englishReport } from "@/utils/reportTranslation";
 import { applyReportEdits } from "@/utils/condensedInfoEdits";
-import { condensedInfoPrompt } from "@/constants/assistantAI/prompt";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import OpenAI from "openai";
+import { documentRequest } from "@/auth/api";
 import { RootState } from "@/store";
 import { setUserInfoReport } from "@/slice";
 import { formatUserInfo, parseUserInfoDetails, UserInfoDetails } from "@/utils/condensedUserInfo";
@@ -52,19 +51,7 @@ export function CondensedInfoProvider({ children }: { children: ReactNode }) {
       let details: UserInfoDetails = { userName: "", housingLocationType: "", evictionReason: "", chatHighlights: [] };
       const hasSources = snapshot.evictionNotice || snapshot.leaseAgreement || snapshot.conversation.some((message: { role: string }) => message.role === "user") || snapshot.additionalFiles.some((file: { markdown: string }) => file.markdown.trim());
       if (hasSources) {
-        const client = new OpenAI({ apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true });
-        const response = await client.chat.completions.create({
-          model: "gpt-4.1-mini",
-          temperature: 0,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: condensedInfoPrompt },
-            { role: "user", content: source },
-          ],
-          max_tokens: 2500,
-        }, { signal: abortController.signal });
-        if (response.choices[0]?.finish_reason !== "stop") throw new Error("Incomplete summary");
-        details = parseUserInfoDetails(response.choices[0]?.message?.content || "");
+        details = parseUserInfoDetails(await documentRequest({ operation: "summary", text: source }, abortController.signal));
       }
       if (request !== requestId.current || latestSource.current !== source || abortController.signal.aborted) return;
       const formatted = formatUserInfo(details, snapshot.location, snapshot.events, snapshot.preferredLanguage);

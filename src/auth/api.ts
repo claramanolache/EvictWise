@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 export interface Account { id: string; username: string; preferredLanguage: string }
-const API_URL = (process.env.EXPO_PUBLIC_AUTH_API_URL || process.env.EXPO_PUBLIC_TRANSLATION_API_URL || "http://localhost:3001").replace(/\/$/, "");
+const API_URL = (process.env.EXPO_PUBLIC_AUTH_API_URL || process.env.EXPO_PUBLIC_TRANSLATION_API_URL || (typeof window !== "undefined" && window.location?.protocol === "https:" ? window.location.origin : "http://localhost:3001")).replace(/\/$/, "");
 let nativeToken: string | null = null;
 
 export async function accountRequest(path: string, body?: Record<string, string>): Promise<{ user?: Account; token?: string }> {
@@ -52,4 +52,22 @@ export async function chatRequest(body: { messages: unknown[]; profileContext: s
     if (error instanceof Error && error.name !== "TypeError" && error.name !== "AbortError") throw error;
     throw new Error("Cannot reach the legal knowledge service. Please try again.");
   } finally { clearTimeout(timer); }
+}
+
+export async function documentRequest(body: { operation: "events" | "summary" | "transcribe"; text?: string; image?: string }, signal?: AbortSignal): Promise<string> {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  if (signal?.aborted) abort();
+  const timer = setTimeout(abort, 60000);
+  try {
+    const response = await fetch(`${API_URL}/api/auth/document-ai`, {
+      method: "POST", credentials: "include", signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...(Platform.OS !== "web" && nativeToken ? { Authorization: `Bearer ${nativeToken}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || typeof data.content !== "string") throw new Error("Document processing failed. Please try again.");
+    return data.content;
+  } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
 }

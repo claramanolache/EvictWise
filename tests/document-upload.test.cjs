@@ -11,25 +11,24 @@ const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/h
 function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = false, size = 100, fail = false, text = 'Rent due January 15, 2026', rawEvents, native = false } = {}) {
   const requests = [], actions = [], saves = [], states = [];
   let pickerOptions, parses = 0;
-  const result = { canceled, assets: [{ name, mimeType, size, uri: 'file:///test-image', ...(native ? {} : { file: { name, size } }) }] };
+  const bytes = Buffer.from(mimeType === 'application/pdf' ? '%PDF-1.7 padding' : mimeType === 'image/png' ? '89504e470d0a1a0a00000000' : mimeType === 'image/webp' ? '524946460000000057454250' : 'ffd8ff000000000000000000', mimeType === 'application/pdf' ? 'utf8' : 'hex');
+  const result = { canceled, assets: [{ name, mimeType, size, uri: 'file:///test-image', ...(native ? {} : { file: { name, size, arrayBuffer: async () => bytes } }) }] };
   const mocks = {
     react: { useRef: current => ({ current }), useState: value => { const i = states.length; states.push(value); return [value, value => states[i] = value]; } },
     'react-redux': { useDispatch: () => action => actions.push(action) },
     'react-native': { Platform: { OS: native ? 'ios' : 'web' } },
     'expo-document-picker': { getDocumentAsync: async options => { pickerOptions = options; return result; } },
-    'expo-file-system': { File: class { async base64() { return 'dGVzdA=='; } } },
+    'expo-file-system': { File: class { async base64() { return bytes.toString('base64'); } async bytes() { return bytes; } } },
     '@/utils/documentFiles': { saveOriginalFile: async () => 'saved-original-id' },
     '@/pdf': { parsePdfToMarkdown: async () => { parses++; return text; } },
     '@/constants/assistantAI/prompt': { extractEventsPrompt: 'Extract events' },
     '@/slice': { clearEventsByDocument: document => ({ kind: 'clear', document }), addEvent: event => ({ kind: 'add', event }) },
-    openai: class {
-      chat = { completions: { create: async request => {
-        requests.push(request);
-        if (fail) throw new Error('API failure');
-        const content = Array.isArray(request.messages[0].content) ? text : JSON.stringify(rawEvents ?? [{ date: [2026, 1, 15], deltaDays: 0, name: 'Rent', type: 'payment' }]);
-        return { choices: [{ finish_reason: 'stop', message: { content } }] };
-      } } };
-    },
+    '../../server/file-validation.cjs': require('../server/file-validation.cjs'),
+    '@/auth/api': { documentRequest: async request => {
+      requests.push(request);
+      if (fail) throw new Error('API failure');
+      return request.operation === 'transcribe' ? text : JSON.stringify(rawEvents ?? [{ date: [2026, 1, 15], deltaDays: 0, name: 'Rent', type: 'payment' }]);
+    } },
   };
   const exports = {};
   vm.runInNewContext(source, {
@@ -54,8 +53,8 @@ for (const [name, mimeType] of [['lease.jpg', 'image/jpeg'], ['notice.png', 'ima
     const h = setup({ name, mimeType }); await h.run('lease');
     assert.equal(h.parses(), 0);
     assert.equal(h.requests.length, 2);
-    assert.match(h.requests[0].messages[0].content[1].image_url.url, /^data:image\//);
-    assert.equal(h.requests[1].messages[1].content, h.saves[0].markdown);
+    assert.match(h.requests[0].image, /^data:image\//);
+    assert.equal(h.requests[1].text, h.saves[0].markdown);
     assert.equal(h.saves[0].name, name);
     assert.equal(h.actions[0].document, 'lease');
     assert.ok(h.options().type.includes(mimeType));

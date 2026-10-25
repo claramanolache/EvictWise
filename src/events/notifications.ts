@@ -45,7 +45,6 @@ const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
         date: eventDate, // Schedules it for the exact time of the event
       },
     });
-    console.log(`Scheduled 'Today' notification for: ${event.name}`);
   }
 
   // --- Schedule for One Day Before ---
@@ -64,7 +63,6 @@ const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
         date: oneDayBefore,
       },
     });
-    console.log(`Scheduled 'One Day Away' notification for: ${event.name}`);
   }
 
   // --- Schedule for One Week Before ---
@@ -83,7 +81,6 @@ const scheduleNotificationsForEvent = async (event: CalendarEvent) => {
         date: oneWeekBefore,
       },
     });
-    console.log(`Scheduled 'One Week Away' notification for: ${event.name}`);
   }
 };
 
@@ -99,13 +96,11 @@ export const scheduleAllEventNotifications = async (events: CalendarEvent[]) => 
 
   // 1. Cancel all previously scheduled notifications
   await Notifications.cancelAllScheduledNotificationsAsync();
-  console.log("Cancelled all previous notifications.");
 
   // 2. Schedule new notifications for each event
   for (const event of events) {
     await scheduleNotificationsForEvent(event);
   }
-  console.log("Finished scheduling all event notifications.");
 };
 
 

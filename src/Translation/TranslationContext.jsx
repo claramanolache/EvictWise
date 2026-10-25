@@ -235,7 +235,7 @@ const ENGLISH_INTERFACE = {
   downloadUserInfo: "Download / share file",
   userInfoFailed: "Could not generate or save the file. Please try again.",
   additionalInformation: "Additional information",
-  additionalInformationHelp: "Upload supporting files of any type. No app-imposed count or size limit; available device storage still applies.",
+  additionalInformationHelp: "Upload PDF, JPEG, PNG, or WebP files, up to 20 MB each. There is no file-count limit; available device storage still applies.",
   uploadAdditionalFiles: "Upload files",
   additionalFilesFailed: "Some files could not be saved. Check available storage and try again. Files already saved are still available.",
   documentNoPreview: "No preview is available for this file type. Download the original to open it.",
@@ -328,7 +328,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v44-${language}`;
+    const cacheKey = `interface-v45-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
