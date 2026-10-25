@@ -518,3 +518,11 @@ transactional reservations, shared key management, and a reviewed allocation pol
 Implementation: `server/matching/assignment.cjs` (solver), `run.cjs` (shared scoring),
 `organizations.cjs` (read-only SQL), `user-store.cjs` (encryption), `demo-data.cjs`
 (synthetic fixtures/capacities), and `scripts/matching-demo.cjs` (explicit CLI).
+
+
+Upload troubleshooting: the API health response now advertises `documentAI: true`.
+The development launcher refuses an older running API without that capability;
+restart it with `npm run server`. Upload errors distinguish an outdated API, expired
+session, usage limits, timeout, and service failure. All three upload flows normalize
+missing/generic picker MIME types and JPEG/PDF aliases before checking the actual
+file signatures. Additional-file errors identify unsupported or oversized files.

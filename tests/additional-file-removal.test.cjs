@@ -20,6 +20,8 @@ function setup(fail = false) {
   const component = load('components/AdditionalInformation.tsx', {
     react: hooks, 'react-native': { View: 'View', Text: 'Text', Pressable: 'Pressable' },
     'react-redux': { useSelector: fn => fn({ app: state }), useDispatch: () => action => { state = slice.default(state, action); } },
+    '../../server/file-validation.cjs': require('../server/file-validation.cjs'),
+    '@/components/FileValidationProgress': 'FileValidationProgress',
     '@/slice': slice, '@/components/ThemedPressable': 'Button', 'expo-document-picker': {},
     '@/context/ThemeContext': { useAppColorScheme: () => 'dark' }, '@/constants/theme': { getTheme: () => ({}) },
     '@/Translation/TranslationContext': { useTranslation: () => ({ t: k => k }) },

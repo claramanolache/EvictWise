@@ -8,7 +8,7 @@ const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/h
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
 
-function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = false, size = 100, fail = false, text = 'Rent due January 15, 2026', rawEvents, native = false } = {}) {
+function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = false, size = 100, fail = false, failureKey = 'API failure', text = 'Rent due January 15, 2026', rawEvents, native = false } = {}) {
   const requests = [], actions = [], saves = [], states = [];
   let pickerOptions, parses = 0;
   const bytes = Buffer.from(mimeType === 'application/pdf' ? '%PDF-1.7 padding' : mimeType === 'image/png' ? '89504e470d0a1a0a00000000' : mimeType === 'image/webp' ? '524946460000000057454250' : 'ffd8ff000000000000000000', mimeType === 'application/pdf' ? 'utf8' : 'hex');
@@ -26,13 +26,13 @@ function setup({ name = 'notice.pdf', mimeType = 'application/pdf', canceled = f
     '../../server/file-validation.cjs': require('../server/file-validation.cjs'),
     '@/auth/api': { documentRequest: async request => {
       requests.push(request);
-      if (fail) throw new Error('API failure');
+      if (fail) throw new Error(failureKey);
       return request.operation === 'transcribe' ? text : JSON.stringify(rawEvents ?? [{ date: [2026, 1, 15], deltaDays: 0, name: 'Rent', type: 'payment' }]);
     } },
   };
   const exports = {};
   vm.runInNewContext(source, {
-    exports, require: name => mocks[name], process: { env: {} }, console,
+    exports, Error, require: name => mocks[name], process: { env: {} }, console,
     FileReader: class { readAsDataURL() { this.result = `data:${mimeType};base64,dGVzdA==`; this.onload(); } },
   });
   const hook = exports.useDocumentUpload();
@@ -85,3 +85,14 @@ for (const [name, options] of [
     assert.equal(h.states[1], name !== 'cancel');
   });
 }
+
+for (const mimeType of ['application/octet-stream', 'binary/octet-stream', 'image/jpg', 'IMAGE/JPEG']) {
+  test(`accepts genuine JPEG bytes with picker metadata ${mimeType}`, async () => {
+    const h = setup({ name: 'SCAN.JPG', mimeType }); await h.run('lease');
+    assert.equal(h.saves.length, 1); assert.equal(h.saves[0].mimeType, 'image/jpeg');
+  });
+}
+test('outdated API is reported distinctly and preserves the old document', async () => {
+  const h = setup({ fail: true, failureKey: 'documentServiceOutdated' }); await h.run('eviction');
+  assert.equal(h.states[2], 'documentServiceOutdated'); assert.equal(h.saves.length, 0); assert.equal(h.actions.length, 0);
+});

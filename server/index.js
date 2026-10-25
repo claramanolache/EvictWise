@@ -40,7 +40,7 @@ app.use("/api/auth", (req, res, next) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, capabilities: { ragChat: true } });
+  res.json({ ok: true, capabilities: { ragChat: true, documentAI: true } });
 });
 
 app.post("/api/translate", require("./translation-handler.cjs").createTranslationHandler(translationClient, PROJECT_ID, CLIENT_ORIGIN));

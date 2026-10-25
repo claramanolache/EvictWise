@@ -180,6 +180,9 @@ export const slice = createSlice({
     setLocation: (state, action: PayloadAction<LocationData>) => {
       state.location = action.payload;
     },
+    clearLocation: (state) => {
+      state.location = null;
+    },
   },
 });
 
@@ -206,6 +209,7 @@ export const {
   clearEventsByDocument,
   clearEvents,
   setLocation,
+  clearLocation,
 } = slice.actions;
 
 export default slice.reducer;

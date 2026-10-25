@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
 
-function setup({ ready = [true], authReady = true, chatReady = true, env = {} } = {}) {
+function setup({ ready = [true], authReady = true, chatReady = true, documentReady = true, env = {} } = {}) {
   const children = [], calls = [], errors = [], signals = {};
   const proc = { env, argv: ['node', 'script', '--web'], execPath: process.execPath, once: (name, fn) => { signals[name] = fn; } };
   const module = { exports: {} };
@@ -27,7 +27,7 @@ function setup({ ready = [true], authReady = true, chatReady = true, env = {} } 
     fetch: async url => {
       calls.push(url);
       if (url.endsWith('/api/auth/session')) return { ok: false, status: authReady ? 401 : 404, json: async () => authReady ? { error: 'authSignInRequired' } : {} };
-      return { ok: true, json: async () => ({ ok: ready.length > 1 ? ready.shift() : ready[0], capabilities: { ragChat: chatReady } }) };
+      return { ok: true, json: async () => ({ ok: ready.length > 1 ? ready.shift() : ready[0], capabilities: { ragChat: chatReady, documentAI: documentReady } }) };
     },
   });
   return { ...module.exports, children, calls, errors, signals, proc };
@@ -89,4 +89,10 @@ test('checks a separately configured account endpoint before starting Expo', asy
 test('does not reuse an API that has accounts but lacks chat',async()=>{
  const h=setup({chatReady:false});await h.main();
  assert.equal(h.children.length,0);assert.match(h.errors[0],/lacks RAG chat/);
+});
+
+test('rejects a stale API with chat but no authenticated document service', async () => {
+  const h = setup({ documentReady: false }); await h.main();
+  assert.equal(h.children.length, 0); assert.equal(h.proc.exitCode, 1);
+  assert.match(h.errors[0], /lacks document processing/);
 });

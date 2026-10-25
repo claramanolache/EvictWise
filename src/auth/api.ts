@@ -67,7 +67,18 @@ export async function documentRequest(body: { operation: "events" | "summary" | 
       body: JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || typeof data.content !== "string") throw new Error("Document processing failed. Please try again.");
+    if (!response.ok) {
+      const key = response.status === 404 ? "documentServiceOutdated"
+        : response.status === 401 ? "documentSignInRequired"
+        : response.status === 429 ? "documentRateLimited"
+        : response.status === 413 ? "documentTooLarge" : "documentServiceUnavailable";
+      throw new Error(key);
+    }
+    if (typeof data.content !== "string") throw new Error("documentServiceUnavailable");
     return data.content;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw new Error("documentRequestTimedOut");
+    if (error instanceof TypeError) throw new Error("documentServiceUnavailable");
+    throw error;
   } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
 }

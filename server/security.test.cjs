@@ -56,3 +56,11 @@ test('web policy hashes inline scripts and allows local PDF workers without arbi
     assert.doesNotMatch(policy,/unsafe-eval|script-src[^;]*unsafe-inline/);
   } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('picker MIME normalization accepts generic metadata without accepting disguised files',()=>{
+ const {normalizeFileType}=require('./file-validation.cjs');
+ for(const type of ['',undefined,'application/octet-stream','binary/octet-stream'])assert.equal(normalizeFileType(type,'NOTICE.PDF'),'application/pdf');
+ assert.equal(normalizeFileType('IMAGE/JPG','notice.jpg'),'image/jpeg');
+ assert.equal(normalizeFileType('application/x-pdf','notice.pdf'),'application/pdf');
+ assert.equal(validFile(Buffer.from('<html>not a PDF</html>'),normalizeFileType('application/octet-stream','notice.pdf')),false);
+});

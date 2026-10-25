@@ -1,4 +1,4 @@
-import { validFile } from "../../server/file-validation.cjs";
+import { validFile, normalizeFileType } from "../../server/file-validation.cjs";
 import { Platform } from "react-native";
 import type { DocumentPickerAsset } from "expo-document-picker";
 
@@ -12,6 +12,7 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 export async function saveOriginalFile(asset: DocumentPickerAsset, mimeType: string): Promise<string> {
+  mimeType = normalizeFileType(mimeType, asset.name);
   if ((asset.size ?? asset.file?.size ?? 0) > 20 * 1024 * 1024) throw new Error("documentTooLarge");
   const bytes = Platform.OS === "web"
     ? new Uint8Array(await (asset.file ?? await (await fetch(asset.uri)).blob()).arrayBuffer())

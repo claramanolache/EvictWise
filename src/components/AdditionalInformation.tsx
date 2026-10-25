@@ -1,3 +1,5 @@
+import { normalizeFileType } from "../../server/file-validation.cjs";
+import FileValidationProgress from "@/components/FileValidationProgress";
 import ThemedPressable from "@/components/ThemedPressable";
 import { useAppColorScheme } from "@/context/ThemeContext";
 import { getTheme } from "@/constants/theme";
@@ -20,6 +22,7 @@ export default function AdditionalInformation({ onView, isEditing = false }: { o
   const [removing, setRemoving] = useState(false);
   const [removeFailed, setRemoveFailed] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [failedNames, setFailedNames] = useState<string[]>([]);
   const [pickerFailed, setPickerFailed] = useState(false);
 
@@ -46,16 +49,16 @@ export default function AdditionalInformation({ onView, isEditing = false }: { o
         type: ["application/pdf", "image/jpeg", "image/png", "image/webp"], multiple: true, copyToCacheDirectory: true, base64: false,
       });
       if (result.canceled) return;
+      setProcessing(true);
       // Store separately so a failed file doesn't discard successful uploads.
       for (const asset of result.assets) {
         try {
-          const extension = asset.name.split(".").pop()?.toLowerCase() || "";
-          const mimeType = asset.mimeType || asset.file?.type ||
-            ({ pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" } as Record<string, string>)[extension] || "application/octet-stream";
+          const mimeType = normalizeFileType(asset.mimeType || asset.file?.type, asset.name);
           const originalFileId = await saveOriginalFile(asset, mimeType);
           dispatch(addAdditionalFile({ name: asset.name, markdown: "", mimeType, originalFileId }));
-        } catch {
-          setFailedNames((names) => [...names, asset.name]);
+        } catch (error) {
+          const key = error instanceof Error && ["documentTooLarge", "documentUnsupportedFormat"].includes(error.message) ? error.message : "additionalFilesFailed";
+          setFailedNames((names) => [...names, `${asset.name}: ${t(key)}`]);
         }
       }
     } catch {
@@ -63,6 +66,7 @@ export default function AdditionalInformation({ onView, isEditing = false }: { o
     } finally {
       busy.current = false;
       setUploading(false);
+      setProcessing(false);
     }
   }
 
@@ -73,6 +77,7 @@ export default function AdditionalInformation({ onView, isEditing = false }: { o
       <ThemedPressable accessibilityRole="button" disabled={uploading || removing} onPress={upload} style={{ alignSelf: "flex-start", padding: 12, borderRadius: 8, backgroundColor: theme.backgroundAccent, opacity: uploading || removing ? 0.6 : 1 }}>
         <Text style={{ color: theme.textOnAccent }}>{t(uploading ? "documentUploading" : "uploadAdditionalFiles")}</Text>
       </ThemedPressable>
+      {processing && <FileValidationProgress />}
       {files.map((file, index) => (
         <View key={file.originalFileId || `file-${index}`} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Text style={{ flex: 1, color: theme.text }}>{file.name}</Text>

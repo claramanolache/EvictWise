@@ -15,7 +15,8 @@ import React, { useRef, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
-import { setEvictionNotice, setLeaseAgreement } from "@/slice";
+import { clearLocation, setEvictionNotice, setLeaseAgreement } from "@/slice";
+import FileValidationProgress from "@/components/FileValidationProgress";
 import LocationSelection from "@/Location/locationSelection";
 
 export default function ProfilePage() {
@@ -28,7 +29,7 @@ export default function ProfilePage() {
   const theme = getTheme(colorScheme);
   const styles = createStyles(theme);
   const dispatch = useDispatch();
-  const { upload, loading: uploadLoading, failed: uploadFailed, errorKey } = useDocumentUpload();
+  const { upload, loading: uploadLoading, processing: uploadProcessing, failed: uploadFailed, errorKey } = useDocumentUpload();
   const { evictionNotice, leaseAgreement, location } = useSelector((state: RootState) => state.app);
   
   const [viewedFile, setViewedFile] = useState<FileData | null>(null);
@@ -95,7 +96,24 @@ export default function ProfilePage() {
         <Text style={[styles.infoValue, isHovered && styles.hoveredText]}>{value}</Text>
         </View>
         {isEditing && (
+          <View style={styles.editActions}>
+            {type === "location" && location && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("clearLocation")}
+                disabled={uploadLoading}
+                onPress={(event) => {
+                  event.stopPropagation();
+                  dispatch(clearLocation());
+                  setShowLocationEditor(false);
+                }}
+                style={styles.clearLocationButton}
+              >
+                <Text style={styles.clearLocationText}>×</Text>
+              </Pressable>
+            )}
             <Text style={styles.editHintText}>{t("clickToEdit")}</Text>
+          </View>
         )}
       </Pressable>
     );
@@ -134,7 +152,7 @@ export default function ProfilePage() {
         <AdditionalInformation onView={setViewedFile} isEditing={isEditing} />
       </View>
 
-      {uploadLoading && <Text accessibilityLiveRegion="polite">{t("documentUploading")}</Text>}
+      {uploadProcessing && <FileValidationProgress />}
       {uploadFailed && <Text accessibilityRole="alert">{t(errorKey)}</Text>}
       <TourTarget name="upload" reveal={y => profileScroll.current?.scrollTo({ y: Math.max(0, y - 120), animated: false })}>
       <ThemedPressable disabled={uploadLoading} style={styles.editButton} onPress={handleEditClick}>
@@ -232,13 +250,28 @@ const createStyles = (theme: Themes) => StyleSheet.create({
   hoveredText: {
       color: theme.text,
   },
+  editActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      width: '100%',
+      marginTop: 4,
+  },
+  clearLocationButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+  },
+  clearLocationText: {
+      fontSize: 24,
+      color: theme.textSecondary,
+  },
   editHintText: {
       fontSize: 12,
       color: theme.backgroundAccent,
       fontStyle: 'italic',
-      width: '100%',
       textAlign: 'right',
-      marginTop: 4,
   },
   locationEditorContainer: {
       marginTop: Spacing.four,

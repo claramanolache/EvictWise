@@ -1,4 +1,5 @@
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
+import FileValidationProgress from "@/components/FileValidationProgress";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 import { useTranslation } from "@/Translation/TranslationContext";
 import { getTheme } from "@/constants/theme";
@@ -19,7 +20,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
   const colorScheme = useColorScheme();
   const theme = getTheme(colorScheme);
 
-  const { upload, loading, failed, errorKey } = useDocumentUpload();
+  const { upload, loading, processing, failed, errorKey } = useDocumentUpload();
   const { t } = useTranslation();
 
   return (
@@ -62,14 +63,7 @@ export default function Upload({ title, current, set, document }: UploadProps) {
           borderRadius: 12,
         }}
       >
-        {loading && (
-          <>
-            <Text style={{ color: theme.textSecondary }}>Loading Files...</Text>
-            <Text style={{ color: theme.textSecondary }}>
-              Do not navigate away!
-            </Text>
-          </>
-        )}
+        {processing && <FileValidationProgress />}
         {!loading && !current && (
           <>
             <Text style={{ color: theme.textSecondary }}>

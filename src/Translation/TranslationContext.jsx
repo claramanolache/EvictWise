@@ -226,6 +226,7 @@ const ENGLISH_INTERFACE = {
   yourInformation: "Your Information",
   editingMode: "(Editing Mode)",
   clickToEdit: "Click to edit",
+  clearLocation: "Clear location",
   evictionNoticeLabel: "Eviction Notice:",
   leaseAgreementLabel: "Lease Agreement:",
   locationLabel: "Location:",
@@ -265,7 +266,13 @@ const ENGLISH_INTERFACE = {
   documentUnsupportedFormat: "Choose a PDF, JPG, PNG, or WebP file.",
   documentTooLarge: "Choose a file smaller than 20 MB.",
   documentUnreadable: "Could not read the document. Try a clearer image or a PDF with selectable text.",
+  validatingFileAuthenticity: "Validating file authenticity",
   documentUploading: "Uploading document...",
+  documentServiceOutdated: "The document service is out of date. Restart the API server and try again.",
+  documentSignInRequired: "Your session has expired. Sign in again to process this document.",
+  documentRateLimited: "The document service is busy or its usage limit was reached. Please try again later.",
+  documentServiceUnavailable: "Cannot process the document right now. Check that the API service is running and try again.",
+  documentRequestTimedOut: "Document processing took too long. Please try again.",
   documentUploadFailed: "Could not process the document. Please try again.",
   notUploaded: "Not uploaded",
   notSet: "Not set",
@@ -344,7 +351,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v48-${language}`;
+    const cacheKey = `interface-v51-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

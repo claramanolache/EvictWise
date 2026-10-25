@@ -43,7 +43,7 @@ test('loads server/.env independent of cwd and allows Expo preflight', async t =
   assert.equal(config.path, path.join(__dirname, '.env'));
   const url = await serve(t, app);
   const health = await fetch(`${url}/api/health`);
-  assert.deepEqual(await health.json(), { ok: true, capabilities: { ragChat: true } });
+  assert.deepEqual(await health.json(), { ok: true, capabilities: { ragChat: true, documentAI: true } });
   const preflight = await fetch(`${url}/api/translate`, {
     method: 'OPTIONS',
     headers: { Origin: 'http://localhost:8081', 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' },

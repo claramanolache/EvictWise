@@ -34,6 +34,13 @@ async function isChatApiReady(url) {
   } catch { return false; }
 }
 
+async function isDocumentApiReady(url) {
+  try {
+    const response = await fetch(`${url.replace(/\/$/, '')}/api/health`, { signal: AbortSignal.timeout(1000) });
+    return response.ok && (await response.json()).capabilities?.documentAI === true;
+  } catch { return false; }
+}
+
 async function main() {
   // Match Expo's development env precedence without printing credentials.
   const dotenv = require('dotenv');
@@ -86,6 +93,9 @@ async function main() {
     if (!stopping && !(await isChatApiReady(process.env.EXPO_PUBLIC_AUTH_API_URL || apiUrl))) {
       throw new Error('The running API lacks RAG chat. Restart it with npm run server.');
     }
+    if (!stopping && !(await isDocumentApiReady(process.env.EXPO_PUBLIC_AUTH_API_URL || apiUrl))) {
+      throw new Error('The running API lacks document processing. Restart it with npm run server before uploading files.');
+    }
     if (!stopping) {
       launch([require.resolve('expo/bin/cli'), 'start', ...process.argv.slice(2)]);
     }
@@ -96,4 +106,4 @@ async function main() {
 }
 
 if (require.main === module) void main();
-module.exports = { isTranslationApiReady, isAccountApiReady, isChatApiReady, main };
+module.exports = { isTranslationApiReady, isAccountApiReady, isChatApiReady, isDocumentApiReady, main };

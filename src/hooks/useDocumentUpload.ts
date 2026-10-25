@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import * as DocumentPicker from "expo-document-picker";
 import { documentRequest } from "@/auth/api";
-import { validFile } from "../../server/file-validation.cjs";
+import { validFile, normalizeFileType } from "../../server/file-validation.cjs";
 import { Platform } from "react-native";
 import { parsePdfToMarkdown } from "@/pdf";
 import { addEvent, clearEventsByDocument } from "@/slice";
@@ -15,6 +15,7 @@ export function useDocumentUpload() {
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [errorKey, setErrorKey] = useState("documentUploadFailed");
+  const [processing, setProcessing] = useState(false);
 
   async function upload(
     document: CalendarEvent["document"],
@@ -31,12 +32,10 @@ export function useDocumentUpload() {
         copyToCacheDirectory: true,
       });
       if (result.canceled) return;
+      setProcessing(true);
       const asset = result.assets?.[0];
       if (!asset) throw new Error("documentUploadFailed");
-      const extension = asset.name.split(".").pop()?.toLowerCase();
-      const mimeType = asset.mimeType && asset.mimeType !== "application/octet-stream"
-        ? asset.mimeType.toLowerCase()
-        : ({ pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" } as Record<string, string>)[extension || ""];
+      const mimeType = normalizeFileType(asset.mimeType || asset.file?.type, asset.name);
       if (!["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
         throw new Error("documentUnsupportedFormat");
       }
@@ -105,13 +104,14 @@ export function useDocumentUpload() {
       events.forEach((event) => dispatch(addEvent(event)));
     } catch (error) {
       const key = error instanceof Error ? error.message : "";
-      setErrorKey(["documentUnsupportedFormat", "documentTooLarge", "documentUnreadable"].includes(key) ? key : "documentUploadFailed");
+      setErrorKey(["documentUnsupportedFormat", "documentTooLarge", "documentUnreadable", "documentServiceOutdated", "documentSignInRequired", "documentRateLimited", "documentServiceUnavailable", "documentRequestTimedOut"].includes(key) ? key : "documentUploadFailed");
       setFailed(true);
     } finally {
       busy.current = false;
       setLoading(false);
+      setProcessing(false);
     }
   }
 
-  return { upload, loading, failed, errorKey };
+  return { upload, loading, processing, failed, errorKey };
 }
