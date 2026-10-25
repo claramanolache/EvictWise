@@ -36,9 +36,9 @@ const button = (nodes, label) => nodes.find(n => n.type === 'Pressable' && n.pro
 test('tour progresses through all features, opens menu, restores it and persists completion', () => {
   const h = setup(); let nodes = h.render();
   assert.equal(nodes.find(n => n.type === 'Modal').props.visible, true);
-  for (const title of ['tourUploadTitle', 'tourMenuTitle', 'menuProfile', 'menuChat', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect', 'tourReadyTitle']) {
+  for (const title of ['tourUploadTitle', 'tourMenuTitle', 'menuChat', 'menuProfile', 'menuCaseStatus', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect', 'tourReadyTitle']) {
     nodes = h.render(); assert.ok(nodes.some(n => n.props.children === title));
-    assert.equal(h.menu(), ['menuProfile', 'menuChat', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect'].includes(title));
+    assert.equal(h.menu(), ['menuChat', 'menuProfile', 'menuCaseStatus', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect'].includes(title));
     button(nodes, title === 'tourReadyTitle' ? 'tourStart' : 'tourNext').props.onPress();
   }
   nodes = h.render(); assert.equal(h.finished(), 1); assert.equal(h.menu(), false);
@@ -72,7 +72,7 @@ test('notification is part of the tour, fires once on entry, and stops after lea
   const h = setup();
   let nodes = h.render();
   assert.equal(h.pings.length, 0);
-  for (let i = 0; i < 5; i++) { button(nodes, 'tourNext').props.onPress(); nodes = h.render(); }
+  for (let i = 0; i < 6; i++) { button(nodes, 'tourNext').props.onPress(); nodes = h.render(); }
   assert.ok(nodes.some(n => n.props.children === 'tourNotificationsTitle'));
   assert.equal(h.pings.length, 1);
   assert.equal(h.pings[0].title, 'tourDemoNotificationTitle');

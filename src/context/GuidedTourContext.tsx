@@ -13,8 +13,9 @@ import { useTranslation } from "@/Translation/TranslationContext";
 export const TOUR_STEPS = [
   { target: "upload", title: "tourUploadTitle", description: "tourUploadBody", menu: false },
   { target: "menu", title: "tourMenuTitle", description: "tourMenuBody", menu: false },
-  { target: "menuProfile", title: "menuProfile", description: "tourProfileBody", menu: true },
   { target: "menuChat", title: "menuChat", description: "tourChatBody", menu: true },
+  { target: "menuProfile", title: "menuProfile", description: "tourProfileBody", menu: true },
+  { target: "menuCaseStatus", title: "menuCaseStatus", description: "tourCaseStatusBody", menu: true },
   { target: "menuCalendar", title: "menuCalendar", description: "tourCalendarBody", menu: true },
   { target: "menuCalendar", title: "tourNotificationsTitle", description: "tourNotificationsBody", menu: true },
   { target: "menuLawyerConnect", title: "menuLawyerConnect", description: "tourLawyersBody", menu: true },

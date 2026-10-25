@@ -85,8 +85,9 @@ const ENGLISH_INTERFACE = {
   tourUploadTitle: "Start with your information",
   tourUploadBody: "Use this button to edit your profile. Add your location, then select the Eviction Notice and Lease Agreement rows to upload a PDF or image. Choose Done when you finish.",
   tourMenuTitle: "Your app menu",
-  tourMenuBody: "Use this menu button to move between Profile, Chat, Calendar, and Lawyer Connect. Let’s take a quick look at each one.",
+  tourMenuBody: "Use this menu button to move between Chat, Profile, Case Status, Calendar, and Lawyer Connect. Let’s take a quick look at each one.",
   tourProfileBody: "Keep your documents and location here. Add supporting files under Additional information, or remove them in edit mode. After both main documents are uploaded, your case summary appears below. It updates automatically, displays in your language, and downloads in English.",
+  tourCaseStatusBody: "Set up your case with a few questions, then review your eviction stage and whether it is user-reported, document-supported, or verified. Select a stage to learn about it without changing your actual status. Use the Next Steps checklist to track tasks, review deadlines in Overview, and edit your Case Details. Missing or unverified deadlines are labeled clearly.",
   tourChatBody: "Ask questions about your notice, lease, or next steps. The assistant uses your saved information and may ask follow-up questions. Translate lets you choose a language for the conversation. Always verify important legal information.",
   tourCalendarBody: "See deadlines extracted from your documents. Select a day for its details, and check off completed tasks in the priority checklist. Review the extracted dates against your documents. Next, we will show a sample notification.",
   tourNotificationsTitle: "A sample reminder",
@@ -328,7 +329,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v45-${language}`;
+    const cacheKey = `interface-v47-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 
