@@ -68,7 +68,10 @@
     "rag:index": "node scripts/index-legal-knowledge.cjs",
     "test:rag": "node --test server/rag/*.test.cjs",
     "rag:fetch": "python3 scripts/fetch-legal-sources.py",
-    "rag:index:text": "node scripts/index-legal-knowledge.cjs --text-only"
+    "rag:index:text": "node scripts/index-legal-knowledge.cjs --text-only",
+    "matching:demo:seed": "node --experimental-strip-types scripts/matching-demo.cjs --seed",
+    "matching:demo": "node --experimental-strip-types scripts/matching-demo.cjs",
+    "test:matching": "node --experimental-strip-types --test server/matching/*.test.cjs"
   },
   "private": true,
   "engines": {

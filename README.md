@@ -418,3 +418,75 @@ location lookup. Inline styles remain permitted for React Native Web. Rebuild an
 restart after changing the export. Expo's development server does not receive these
 production hosting headers. If using a separate static host, configure equivalent
 headers there; API headers alone cannot protect the frontend.
+
+### Offline capacitated lawyer matching demo (disabled in the app)
+
+This is an isolated development experiment, with no app screen, API route,
+startup job, or change to the existing individual recommendations. It does not
+reserve lawyer appointments or modify the organization directory or account database.
+
+The demo creates 12 explicitly fictional tenant profiles with location coordinates,
+preferred language, requested services, and the same four 1–10 priority weights as
+Lawyer Connect. It reads organizations directly from `data/lawyers.sqlite3`, including
+address-matched coordinates, services, languages, and the disclosed fabricated prices.
+Eight **fabricated slots** are spread across the six organizations. These are
+organization-level capacities, not verified availability of individual lawyers.
+
+```bash
+npm run matching:demo:seed  # Create encrypted demo users and a local encryption key once
+npm run matching:demo       # Print a simulated assignment; does not reserve slots
+npm run test:matching       # Solver, scoring integration, and encryption tests
+```
+
+Run with the project's supported Node version (22.13+); these commands enable
+Node's TypeScript stripping to reuse `src/utils/lawyerRecommendations.ts` directly.
+No new dependencies, network calls, geocoding, AI requests, or real accounts are involved.
+Seeding refuses to overwrite an existing database. Running the demo again computes
+from the same available slots, not from the previous output.
+
+**Matching:** users form one side of a bipartite graph and organizations the other.
+An edge exists only when at least one requested service matches, following the live
+recommendation's eligibility rule. Its weight is the existing compatibility score:
+service coverage, distance, language, and fabricated affordability, weighted by that
+user's priorities. Missing location/language/price information follows the existing
+scorer; county coverage is not an eligibility restriction. There is no new intake,
+case-stage, or representation eligibility filter.
+
+A maximum-weight capacitated matching solver uses successive shortest paths in a
+residual flow graph (Bellman–Ford), including reverse edges to revise earlier choices.
+Each user receives at most one organization; each organization receives at most its
+slot count. It maximizes the sum of scores rounded to six decimal places, with zero
+contribution for unmatched users. This is **not** a promise to maximize the number of
+matches or fairness: one strong match can beat two poor matches. Ties use stable ID
+ordering. Input is bounded to 100 users, 50 organizations and 5,000 eligible edges;
+this implementation is for small offline demonstrations, not a production queue.
+
+For example, if user A scores 90 with X and 89 with Y, while user B scores 88 only
+with X, the allocator assigns A→Y and B→X (177 total), instead of giving X to A
+first and leaving B unmatched (90 total).
+
+**Encryption:** `server/private/matching-demo.sqlite3` holds each complete user JSON
+record encrypted with AES-256-GCM: a random 256-bit key, a fresh random 96-bit nonce
+per record, a 128-bit authentication tag, and associated data binding the version
+and row ID. Plaintext names, locations, preferences, and user IDs are never inserted
+into SQLite. SQLite table structure, random row IDs, and record lengths remain
+visible: this is application-level record encryption, not SQLCipher/full-file encryption.
+Decryption happens in process memory only when explicitly running the demo. Wrong
+keys, altered ciphertext, or swapped row IDs cause failure rather than partial output.
+
+The key defaults to `server/private/matching-demo.key`, separate from the database;
+both are owner-readable/writable only and ignored by Git. Optionally set
+`MATCHING_DEMO_KEY_PATH` in `server/.env` to keep the key outside the database folder.
+Never put the key in `EXPO_PUBLIC_*`, source code, or a database backup. A copy of both
+the key and database can decrypt records; key loss prevents decryption. The committed
+fixture generator contains deliberately public fake data, so this demonstrates storage
+protection rather than claiming the example identities are secret.
+
+The output identifies assigned users, scores, matched services, language compatibility,
+distance, capacity usage, and unmatched users. No result is persisted as a real booking.
+Real deployment would need separate authorization, consent, verified availability,
+transactional reservations, shared key management, and a reviewed allocation policy.
+
+Implementation: `server/matching/assignment.cjs` (solver), `run.cjs` (shared scoring),
+`organizations.cjs` (read-only SQL), `user-store.cjs` (encryption), `demo-data.cjs`
+(synthetic fixtures/capacities), and `scripts/matching-demo.cjs` (explicit CLI).
