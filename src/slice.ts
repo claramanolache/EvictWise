@@ -9,10 +9,15 @@ export interface LocationData {
   city: string;
   state: string;
   zipCode?: string;
+  latitude?: number;
+  longitude?: number;
   county?: string;
 }
 
+import type { LawyerProfile } from "@/utils/lawyerRecommendations";
+
 export interface State {
+  lawyerPreferences?: LawyerProfile;
   firstTime: boolean;
   preferredLanguage?: string;
   userInfoEdits?: ReportEdits;
@@ -47,6 +52,9 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    setLawyerPreferences: (state, action: PayloadAction<LawyerProfile>) => {
+      state.lawyerPreferences = action.payload;
+    },
     setPreferredLanguage: (state, action: PayloadAction<string>) => {
       state.preferredLanguage = action.payload;
     },
@@ -117,6 +125,14 @@ export const slice = createSlice({
       state.events.splice(0, state.events.length);
       state.completedCalendarTasks = [];
     },
+    setResolvedLocationCoordinates: (state, action: PayloadAction<{ expected: LocationData; coordinates: { latitude: number; longitude: number } }>) => {
+      const { expected, coordinates } = action.payload;
+      // Do not let an old lookup overwrite a newer profile edit or GPS selection.
+      if (JSON.stringify(state.location) !== JSON.stringify(expected)) return;
+      if (!Number.isFinite(coordinates.latitude) || Math.abs(coordinates.latitude) > 90
+        || !Number.isFinite(coordinates.longitude) || Math.abs(coordinates.longitude) > 180) return;
+      state.location = { ...expected, ...coordinates };
+    },
     setLocation: (state, action: PayloadAction<LocationData>) => {
       state.location = action.payload;
     },
@@ -124,6 +140,8 @@ export const slice = createSlice({
 });
 
 export const {
+  setResolvedLocationCoordinates,
+  setLawyerPreferences,
   setPreferredLanguage,
   toggleCalendarTask,
   updateUserInfoEdits,

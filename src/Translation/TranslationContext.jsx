@@ -49,9 +49,30 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  lawyerTestPrice: "Fabricated test price",
+  lawyerTestPriceUnit: "USD per consultation",
+  lawyerTestPriceDisclosure: "Prices are fabricated for testing purposes only. They are not actual fees, estimates, or quotes from these organizations. Recommendations use these fictional prices.",
+  lawyerRankingMethod: "Ranking uses your saved profile location, preferred language, selected services, and priority weights. Proximity uses approximate straight-line miles from your saved location to the listed office, not driving distance. Saved city locations are automatically looked up to calculate approximate distances from the city center. Affordability uses fabricated test prices; cheaper test prices earn more points.",
+  lawyerDistance: "Approximate straight-line distance",
+  lawyerMiles: "miles",
+  lawyerDistanceUnknown: "Distance unavailable — your profile location could not be resolved to coordinates.",
+  lawyerOfficeDistanceUnknown: "Distance unavailable — this organization has no mapped office address.",
+  lawyerDistanceLoading: "Finding coordinates for your saved location…",
+  lawyerDistanceLookupFailed: "Could not find coordinates for your saved location. Retry or check the city, state, and country in your profile.",
+  lawyerDistanceRetry: "Retry location lookup",
+  lawyerNeedsHelp: "Select all that apply. Tap an option again to remove it. Select at least one before pressing Done.",
+  lawyerNeed: "What help do you need?",
+  lawyerRecommendation: "Suggested organization",
+  lawyerNoConfirmedMatch: "No organization lists any of your selected services. Browse the organizations below.",
+  lawyerRecommendationHelp: "This demo recommendation combines documented matches with fabricated test prices. Equal scores share the same ranking; names break ties. Contact the organization to confirm fees, eligibility, language assistance, and availability.",
+  lawyerMatchScore: "Demo preference match",
+  lawyerServiceMatch: "Matching selected services",
+  lawyerServiceUnknown: "None of your selected services are listed — confirm directly",
+  lawyerLanguageMatch: "Lists your preferred language",
+  lawyerLanguageUnknown: "Preferred language unconfirmed — ask about language assistance",
   lawyerPriorities: "Your priorities",
   lawyerPrioritiesHelp: "Rate how important each factor is to you, from 1 (less important) to 10 (most important).",
-  lawyerPriorityProximity: "Jurisdiction and proximity",
+  lawyerPriorityProximity: "Distance",
   lawyerPrioritySpecialization: "Case specialization",
   lawyerPriorityLanguage: "Language compatibility",
   lawyerPriorityAffordability: "Affordability",
@@ -291,7 +312,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v33-${language}`;
+    const cacheKey = `interface-v39-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

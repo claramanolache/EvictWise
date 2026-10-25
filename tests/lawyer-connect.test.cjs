@@ -51,8 +51,12 @@ test('incomplete translation falls back to English and can be retried', async ()
 });
 test('section title expands and collapses the complete grid while contact URLs stay original', () => {
   const react = hooks(), opened = [];
+  const app = { location: null };
   const { default: Page } = load('app/lawyer-connect.tsx', {
+    '@/hooks/useProfileCoordinates': { useProfileCoordinates: () => ({ loading: false, failed: false }) },
     react, '@/data/lawyers.json': organizations,
+    '@/utils/lawyerRecommendations': load('utils/lawyerRecommendations.ts', {}),
+    '@/slice': { setLawyerPreferences: value => ({ type: 'preferences', payload: value }) },
     '@/components/LawyerPreferences': 'LawyerPreferences',
     '@react-native-vector-icons/fontawesome-free-solid': 'Icon',
     '@/hooks/useLawyerTranslation': { useLawyerTranslation: () => ({ translateDetail: text => `translated:${text}`, loading: false, failed: false }) },
@@ -60,9 +64,9 @@ test('section title expands and collapses the complete grid while contact URLs s
     '@/context/ThemeContext': { useAppColorScheme: () => 'dark' },
     '@/constants/theme': { getTheme: () => ({}) },
     '@/Translation/TranslationContext': { useTranslation: () => ({ language: 'es', t: key => key }) },
-    'react-redux': { useSelector: fn => fn({ app: { location: null } }) },
+    'react-redux': { useDispatch: () => action => { app.lawyerPreferences = action.payload; }, useSelector: fn => fn({ app }) },
     'expo-router': { useRouter: () => ({ push() {} }) },
-    'react-native': { Text: 'Text', View: 'View', ScrollView: 'ScrollView', Pressable: 'Pressable', Linking: { openURL: async url => opened.push(url) } },
+    'react-native': { Modal: 'Modal', Text: 'Text', View: 'View', ScrollView: 'ScrollView', Pressable: 'Pressable', Linking: { openURL: async url => opened.push(url) } },
   });
   const flatten = node => !node || typeof node !== 'object' ? [] : Array.isArray(node) ? node.flatMap(flatten) : [node, ...flatten(node.props?.children)];
   const render = () => flatten(react.render(Page));
@@ -75,6 +79,7 @@ test('section title expands and collapses the complete grid while contact URLs s
   header(nodes).props.onPress(); nodes = render();
   assert.equal(header(nodes).props.accessibilityState.expanded, true);
   for (const org of organizations) assert.ok(nodes.some(n => n.props.children === org.name));
+  assert.equal(nodes.filter(n => n.props.children === 'lawyerTestPriceDisclosure').length, 7);
   assert.ok(nodes.some(n => n.props.name === "chevron-up"));
   assert.ok(nodes.some(n => n.props.children === `translated:${organizations[0].description}`));
   nodes.find(n => n.props.accessibilityLabel === `lawyerWebsite: ${organizations[0].website}`).props.onPress();
@@ -83,4 +88,62 @@ test('section title expands and collapses the complete grid while contact URLs s
   assert.equal(header(nodes).props.accessibilityState.expanded, false);
   assert.ok(nodes.some(n => n.props.name === "chevron-down"));
   assert.ok(!nodes.some(n => n.props.children === organizations[0].name));
+  assert.ok(!nodes.some(n => n.type === 'Modal'));
+  nodes.find(n => n.props.accessibilityLabel === 'doneEditing').props.onPress();
+  nodes = render();
+  assert.ok(nodes.some(n => n.type === 'Modal'));
+  assert.ok(nodes.some(n => n.props.children === 'lawyerDistanceUnknown'));
+  assert.ok(nodes.some(n => n.props.children === 'Law Foundation of Silicon Valley'));
+  assert.equal(nodes.filter(n => n.props.children === 'lawyerTestPriceDisclosure').length, 2);
+  nodes.find(n => n.props.accessibilityLabel === 'closeDocument').props.onPress();
+  nodes = render();
+  assert.ok(!nodes.some(n => n.type === 'Modal'));
+  app.location = { country: 'USA', state: 'CA', city: 'Palo Alto', latitude: 37.45, longitude: -122.15 };
+  nodes = render();
+  nodes.find(n => n.props.accessibilityLabel === 'doneEditing').props.onPress();
+  nodes = render();
+  assert.ok(nodes.some(n => n.props.children === 'Law Foundation of Silicon Valley'));
+  assert.equal(nodes.filter(n => n.props.children === 'lawyerTestPriceDisclosure').length, 2);
+  assert.ok(!nodes.some(n => typeof n.props.children === 'string' && n.props.children.startsWith('lawyerCoverage')));
+  assert.ok(nodes.some(n => typeof n.props.children === 'string' && n.props.children.startsWith('lawyerDistance: ') && n.props.children.endsWith('lawyerMiles')));
+  nodes.find(n => n.props.accessibilityLabel === 'lawyerWebsite: https://www.lawfoundation.org/').props.onPress();
+  assert.equal(opened.at(-1), 'https://www.lawfoundation.org/');
+  nodes.find(n => n.type === 'Modal').props.onRequestClose();
+  assert.ok(!render().some(n => n.type === 'Modal'));
+  const option = (nodes, label) => nodes.find(n => n.props.accessibilityRole === 'checkbox' && n.props.accessibilityLabel === `translated:${label}`);
+  nodes = render();
+  assert.equal(option(nodes, 'eviction defense').props.accessibilityState.checked, true);
+  option(nodes, 'mediation').props.onPress();
+  nodes = render();
+  assert.equal(option(nodes, 'mediation').props.accessibilityState.checked, true);
+  assert.equal(option(nodes, 'eviction defense').props.accessibilityState.checked, true);
+  option(nodes, 'eviction defense').props.onPress();
+  nodes = render();
+  assert.equal(option(nodes, 'mediation').props.accessibilityState.checked, true);
+  option(nodes, 'mediation').props.onPress();
+  nodes = render();
+  const done = nodes.find(n => n.props.accessibilityLabel === 'doneEditing');
+  assert.equal(done.props.disabled, true);
+  done.props.onPress();
+  assert.ok(!render().some(n => n.type === 'Modal'));
+  nodes = render();
+  header(nodes).props.onPress();
+  nodes = render();
+  const badges = nodes => nodes.filter(n => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.endsWith('% lawyerMatchScore'));
+  const previousScores = badges(nodes).map(n => n.props.accessibilityLabel);
+  assert.equal(previousScores.length, organizations.length);
+  option(nodes, 'mediation').props.onPress();
+  nodes = render();
+  assert.deepEqual(badges(nodes).map(n => n.props.accessibilityLabel), previousScores);
+  nodes.find(n => n.props.accessibilityLabel === 'doneEditing').props.onPress();
+  nodes = render();
+  const nextScores = badges(nodes).map(n => n.props.accessibilityLabel);
+  assert.equal(nextScores.length, organizations.length);
+  assert.notDeepEqual(nextScores, previousScores);
+  const { rankLawyers } = load('utils/lawyerRecommendations.ts', {});
+  const expected = rankLawyers(organizations, app.lawyerPreferences, app.location, 'es');
+  assert.deepEqual(nextScores, Array.from(expected, item => `${item.organization.name}: ${item.score}% lawyerMatchScore`));
+  nodes.find(n => n.props.accessibilityLabel === 'closeDocument').props.onPress();
+  assert.deepEqual(badges(render()).map(n => n.props.accessibilityLabel), nextScores);
+
 });

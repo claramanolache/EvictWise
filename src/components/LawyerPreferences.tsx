@@ -1,15 +1,14 @@
-import { useState } from "react";
+import type { ReactNode } from "react";
+import { preferenceKeys as preferences, type LawyerWeights, type PreferenceKey } from "@/utils/lawyerRecommendations";
 import { Text, View } from "react-native";
 import PreferenceSlider from "@/components/PreferenceSlider";
 import { useAppColorScheme } from "@/context/ThemeContext";
 import { getTheme } from "@/constants/theme";
 import { useTranslation } from "@/Translation/TranslationContext";
 
-const preferences = ["lawyerPriorityProximity", "lawyerPrioritySpecialization", "lawyerPriorityLanguage", "lawyerPriorityAffordability"] as const;
-export default function LawyerPreferences() {
+export default function LawyerPreferences({ values, onChange, children }: { children?: ReactNode; values: LawyerWeights; onChange: (key: PreferenceKey, value: number) => void }) {
   const theme = getTheme(useAppColorScheme());
   const { t } = useTranslation();
-  const [values, setValues] = useState<Record<string, number>>(() => Object.fromEntries(preferences.map(key => [key, 5])));
   return <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 16, padding: 20, gap: 20 }}>
     <Text accessibilityRole="header" style={{ color: theme.textHeading, fontSize: 20, fontWeight: "600" }}>{t("lawyerPriorities")}</Text>
     <Text style={{ color: theme.textSecondary, fontSize: 14, lineHeight: 21 }}>{t("lawyerPrioritiesHelp")}</Text>
@@ -19,12 +18,13 @@ export default function LawyerPreferences() {
         <Text style={{ color: theme.backgroundAccent, fontSize: 15, fontWeight: "600" }}>{values[key]} / 10</Text>
       </View>
       <PreferenceSlider label={t(key)} value={values[key]} onChange={value => {
-        if (Number.isFinite(value)) setValues(previous => ({ ...previous, [key]: Math.max(1, Math.min(10, Math.round(value))) }));
+        if (Number.isFinite(value)) onChange(key, Math.max(1, Math.min(10, Math.round(value))));
       }} />
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Text style={{ color: theme.textSecondary, fontSize: 12 }}>1</Text>
         <Text style={{ color: theme.textSecondary, fontSize: 12 }}>10</Text>
       </View>
     </View>)}
+    {children}
   </View>;
 }

@@ -127,3 +127,22 @@ INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clse
 INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clsepa', 'lawsuit filed');
 INSERT INTO organization_case_stages (organization_id, case_stage) VALUES ('clsepa', 'trial');
 DELETE FROM organization_languages WHERE organization_id = 'clsepa';
+
+-- US Census Public_AR_Current address-range geocodes, retrieved 2026-10-24.
+-- Approximate office coordinates, not driving routes.
+INSERT INTO organization_coordinates (organization_id, address, latitude, longitude, source) VALUES ('clsepa', '1861 Bay Rd. East Palo Alto, CA 94303', 37.47261466989, -122.132899165445, 'https://geocoding.geo.census.gov/geocoder/') ON CONFLICT(organization_id) DO UPDATE SET address = excluded.address, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source;
+INSERT INTO organization_coordinates (organization_id, address, latitude, longitude, source) VALUES ('eviction-defense-collaborative', '976 Mission St. San Francisco, CA 94103', 37.78129155347, -122.408405561559, 'https://geocoding.geo.census.gov/geocoder/') ON CONFLICT(organization_id) DO UPDATE SET address = excluded.address, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source;
+INSERT INTO organization_coordinates (organization_id, address, latitude, longitude, source) VALUES ('law-foundation-silicon-valley', '4 North Second Street, Suite 1300, San Jose, CA 95113', 37.336812912928, -121.889534019836, 'https://geocoding.geo.census.gov/geocoder/') ON CONFLICT(organization_id) DO UPDATE SET address = excluded.address, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source;
+INSERT INTO organization_coordinates (organization_id, address, latitude, longitude, source) VALUES ('legal-aid-san-mateo', '330 Twin Dolphin Drive, Suite 123, Redwood City, CA 94065', 37.521386329287, -122.2583861336, 'https://geocoding.geo.census.gov/geocoder/') ON CONFLICT(organization_id) DO UPDATE SET address = excluded.address, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source;
+INSERT INTO organization_coordinates (organization_id, address, latitude, longitude, source) VALUES ('project-sentinel', '1490 El Camino Real, Santa Clara, CA 95050', 37.352288995664, -121.953202452822, 'https://geocoding.geo.census.gov/geocoder/') ON CONFLICT(organization_id) DO UPDATE SET address = excluded.address, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source;
+
+-- FICTIONAL prices per consultation in USD, fabricated solely for testing ranking.
+-- These values are not actual fees, estimates, or quotes from these organizations.
+INSERT INTO organization_test_prices (organization_id, consultation_usd, fabricated_for_testing) VALUES
+('project-sentinel', 25, 1),
+('law-foundation-silicon-valley', 100, 1),
+('bay-area-legal-aid', 40, 1),
+('eviction-defense-collaborative', 150, 1),
+('legal-aid-san-mateo', 75, 1),
+('clsepa', 50, 1)
+ON CONFLICT(organization_id) DO UPDATE SET consultation_usd = excluded.consultation_usd, fabricated_for_testing = 1;

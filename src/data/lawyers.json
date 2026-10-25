@@ -8,6 +8,10 @@
     "address": null,
     "description": "Large regional legal aid organization serving multiple Bay Area counties",
     "language_assistance_notes": null,
+    "testPriceUsd": 40.0,
+    "priceFabricatedForTesting": true,
+    "latitude": null,
+    "longitude": null,
     "counties": [
       "Alameda",
       "Contra Costa",
@@ -44,6 +48,10 @@
     "address": "1861 Bay Rd. East Palo Alto, CA 94303",
     "description": "Important provider for East Palo Alto and surrounding communities",
     "language_assistance_notes": null,
+    "testPriceUsd": 50.0,
+    "priceFabricatedForTesting": true,
+    "latitude": 37.47261466989,
+    "longitude": -122.132899165445,
     "counties": [
       "San Mateo",
       "Santa Clara"
@@ -75,6 +83,10 @@
     "address": "976 Mission St. San Francisco, CA 94103",
     "description": "Major provider of San Francisco tenant defense services",
     "language_assistance_notes": null,
+    "testPriceUsd": 150.0,
+    "priceFabricatedForTesting": true,
+    "latitude": 37.78129155347,
+    "longitude": -122.408405561559,
     "counties": [
       "San Francisco"
     ],
@@ -104,6 +116,10 @@
     "address": "4 North Second Street, Suite 1300, San Jose, CA 95113",
     "description": "Primary eviction-defense provider for Santa Clara County",
     "language_assistance_notes": "Other, unlisted languages also offered",
+    "testPriceUsd": 100.0,
+    "priceFabricatedForTesting": true,
+    "latitude": 37.336812912928,
+    "longitude": -121.889534019836,
     "counties": [
       "Santa Clara"
     ],
@@ -137,6 +153,10 @@
     "address": "330 Twin Dolphin Drive, Suite 123, Redwood City, CA 94065",
     "description": "Primary legal aid organization for San Mateo County residents",
     "language_assistance_notes": null,
+    "testPriceUsd": 75.0,
+    "priceFabricatedForTesting": true,
+    "latitude": 37.521386329287,
+    "longitude": -122.2583861336,
     "counties": [
       "San Mateo"
     ],
@@ -164,6 +184,10 @@
     "address": "1490 El Camino Real, Santa Clara, CA 95050",
     "description": "Provides counseling and fair housing services",
     "language_assistance_notes": "Offers other language assistance through Language Services Associates",
+    "testPriceUsd": 25.0,
+    "priceFabricatedForTesting": true,
+    "latitude": 37.352288995664,
+    "longitude": -121.953202452822,
     "counties": [
       "Sacramento",
       "San Mateo",

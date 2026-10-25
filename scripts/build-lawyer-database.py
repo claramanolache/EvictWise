@@ -18,6 +18,18 @@ def main():
         organizations = []
         for row in connection.execute("SELECT * FROM organizations ORDER BY name"):
             organization = dict(row)
+            test_price = connection.execute(
+                "SELECT consultation_usd FROM organization_test_prices WHERE organization_id = ? AND fabricated_for_testing = 1",
+                (organization["id"],),
+            ).fetchone()
+            organization["testPriceUsd"] = test_price["consultation_usd"] if test_price else None
+            organization["priceFabricatedForTesting"] = bool(test_price)
+            coordinates = connection.execute(
+                "SELECT latitude, longitude FROM organization_coordinates WHERE organization_id = ? AND address = ?",
+                (organization["id"], organization["address"]),
+            ).fetchone()
+            organization["latitude"] = coordinates["latitude"] if coordinates else None
+            organization["longitude"] = coordinates["longitude"] if coordinates else None
             for table, column, field in [
                 ("organization_counties", "county", "counties"),
                 ("organization_services", "service", "services"),
