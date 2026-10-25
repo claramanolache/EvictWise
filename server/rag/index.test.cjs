@@ -160,3 +160,41 @@ test('grouped citations are normalized and unknown grouped IDs are rejected',asy
   const result=await answer(request);assert.equal(result.content,'Evidence [S1](<evictwise-source:S1>) [S2](<evictwise-source:S2>).');assert.equal(result.sources.length,2);
   content='Evidence [S1, S99].';await assert.rejects(answer(request),/Invalid source citation/);
 });
+
+test('uncited clarification questions survive without publishing unsupported legal prose', async t => {
+  const {db,docs} = fixture(t);
+  writeSource(path.join(docs,'guide.txt'),'Eviction evidence and rent receipts.');
+  await require('./text-search.cjs').rebuildTextIndex(db,docs);
+  let response = {content:'Unsupported legal conclusion that must not be shown.', sourceIds:[], followUpQuestions:['What dates appear on the text messages?']};
+  const client = {chat:{completions:{create:async()=>({choices:[{finish_reason:'stop',message:{content:JSON.stringify(response)}}]})}}};
+  const request = {db,client,messages:[{role:'user',content:'eviction evidence'}],profileContext};
+  const result = await answer(request);
+  assert.match(result.content,/What dates appear on the text messages/);
+  assert.doesNotMatch(result.content,/Unsupported legal conclusion|city\/state/);
+  assert.deepEqual(result.sources,[]);
+  response = {content:'Unsupported legal conclusion.',sourceIds:[],followUpQuestions:[]};
+  const unsupported = await answer(request);
+  assert.match(unsupported.content,/passages do not support/);
+  assert.doesNotMatch(unsupported.content,/Unsupported legal conclusion|city\/state/);
+  response = {content:'',sourceIds:[],followUpQuestions:['What records do you have?']};
+  assert.match((await answer(request)).content,/What records do you have/);
+  response.followUpQuestions = ['Fake citation [S99]?'];
+  await assert.rejects(answer(request),/Invalid follow-up/);
+});
+
+test('inline citations control linked sources despite redundant model metadata', async t => {
+  const {db,docs} = fixture(t);
+  writeSource(path.join(docs,'one.txt'),'Eviction evidence receipts.');
+  writeSource(path.join(docs,'two.txt'),'Eviction evidence messages.');
+  await require('./text-search.cjs').rebuildTextIndex(db,docs);
+  let response = {content:'Evidence [S1].', sourceIds:['S1','S2'],followUpQuestions:[]};
+  const client = {chat:{completions:{create:async()=>({choices:[{message:{content:JSON.stringify(response)}}]})}}};
+  const request = {db,client,messages:[{role:'user',content:'eviction evidence'}],profileContext};
+  let result = await answer(request);
+  assert.deepEqual(result.sources.map(s=>s.id),['S1']);
+  assert.match(result.content,/\[S1\]\(<evictwise-source:S1>\)/);
+  response.sourceIds = [];
+  assert.equal((await answer(request)).sources.length,1);
+  response.sourceIds = ['S99'];
+  await assert.rejects(answer(request),/Invalid source citation/);
+});
