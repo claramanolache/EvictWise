@@ -86,7 +86,14 @@ const ENGLISH_INTERFACE = {
   tourMenuBody: "Use this menu button to move between Profile, Chat, Calendar, and Lawyer Connect. Let’s take a quick look at each one.",
   tourProfileBody: "Keep your documents and location here. Add supporting files under Additional information, or remove them in edit mode. After both main documents are uploaded, your case summary appears below. It updates automatically, displays in your language, and downloads in English.",
   tourChatBody: "Ask questions about your notice, lease, or next steps. The assistant uses your saved information and may ask follow-up questions. Translate lets you choose a language for the conversation. Always verify important legal information.",
-  tourCalendarBody: "See deadlines extracted from your documents. Select a day for its details, and check off completed tasks in the priority checklist. Review the extracted dates against your documents.",
+  tourCalendarBody: "See deadlines extracted from your documents. Select a day for its details, and check off completed tasks in the priority checklist. Review the extracted dates against your documents. Next, we will show a sample notification.",
+  tourNotificationsTitle: "A sample reminder",
+  tourNotificationsBody: "Here is a demo of a deadline reminder. Allow notifications if your device asks. This sample does not add or change any calendar deadlines; sound depends on your device settings.",
+  tourDemoNotificationTitle: "Evict Wise — demo reminder",
+  tourDemoNotificationBody: "Review your case summary and upcoming deadlines. This is a tutorial example, not a real deadline.",
+  tourDemoSent: "Sample notification sent. Your device controls its display and sound.",
+  tourDemoPending: "Notification preview. Checking notification permission…",
+  tourDemoPreview: "In-app preview only: system notifications are unavailable or not permitted.",
   tourLawyersBody: "Open Local legal help to see organizations, counties served, services, and contact details. Contact an organization directly to confirm whether it can help with your case.",
   tourReadyTitle: "You’re ready to begin",
   tourReadyBody: "Start by uploading your eviction notice and lease agreement here. You can return to your profile whenever your information changes.",
@@ -319,7 +326,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v42-${language}`;
+    const cacheKey = `interface-v43-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

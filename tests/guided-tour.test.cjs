@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
 function setup({ firstTime = true, pathname = '/profile' } = {}) {
-  const state = { firstTime }, slots = [], effects = [], timers = new Map();
+  const state = { firstTime }, slots = [], effects = [], timers = new Map(), pings = [];
   let cursor = 0, menuOpen = false, nextTimer = 0, finished = 0;
   const setMenuOpen = value => { menuOpen = value; };
   const hooks = {
@@ -16,6 +16,7 @@ function setup({ firstTime = true, pathname = '/profile' } = {}) {
     useEffect(fn, deps) { const i = cursor++; if (!slots[i] || deps.some((v, j) => v !== slots[i].deps[j])) effects.push(() => { slots[i]?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
   };
   const mocks = {
+    '@/events/demoNotification': { sendDemoNotification: async (title, body, isActive) => { pings.push({ title, body, isActive }); return 'sent'; } },
     react: hooks, 'expo-router': { usePathname: () => pathname },
     'react-redux': { useSelector: fn => fn({ app: state }), useDispatch: () => () => { state.firstTime = false; finished++; } },
     '@/slice': { viewFirstTime: () => ({ type: 'done' }) },
@@ -28,21 +29,22 @@ function setup({ firstTime = true, pathname = '/profile' } = {}) {
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/context/GuidedTourContext.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
     { exports, require: name => mocks[name] ?? require(name), setInterval: fn => { timers.set(++nextTimer, fn); return nextTimer; }, clearInterval: id => timers.delete(id) });
   const flatten = node => !node || typeof node !== 'object' ? [] : Array.isArray(node) ? node.flatMap(flatten) : [node, ...flatten(node.props?.children)];
-  return { state, timers, menu: () => menuOpen, finished: () => finished,
+  return { state, timers, pings, menu: () => menuOpen, finished: () => finished,
     render() { cursor = 0; const nodes = flatten(exports.GuidedTourProvider({ children: null })); while (effects.length) effects.shift()(); return nodes; } };
 }
 const button = (nodes, label) => nodes.find(n => n.type === 'Pressable' && n.props.children?.props?.children === label);
 test('tour progresses through all features, opens menu, restores it and persists completion', () => {
   const h = setup(); let nodes = h.render();
   assert.equal(nodes.find(n => n.type === 'Modal').props.visible, true);
-  for (const title of ['tourUploadTitle', 'tourMenuTitle', 'menuProfile', 'menuChat', 'menuCalendar', 'menuLawyerConnect', 'tourReadyTitle']) {
+  for (const title of ['tourUploadTitle', 'tourMenuTitle', 'menuProfile', 'menuChat', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect', 'tourReadyTitle']) {
     nodes = h.render(); assert.ok(nodes.some(n => n.props.children === title));
-    assert.equal(h.menu(), ['menuProfile', 'menuChat', 'menuCalendar', 'menuLawyerConnect'].includes(title));
+    assert.equal(h.menu(), ['menuProfile', 'menuChat', 'menuCalendar', 'tourNotificationsTitle', 'menuLawyerConnect'].includes(title));
     button(nodes, title === 'tourReadyTitle' ? 'tourStart' : 'tourNext').props.onPress();
   }
   nodes = h.render(); assert.equal(h.finished(), 1); assert.equal(h.menu(), false);
   assert.equal(nodes.find(n => n.type === 'Modal').props.visible, false);
   assert.equal(h.timers.size, 0);
+  assert.equal(h.pings.length, 1);
 });
 test('skip and platform dismiss finish the tour; returning users and other pages do not show it', () => {
   const h = setup(); button(h.render(), 'tourSkip').props.onPress(); h.render(); assert.equal(h.state.firstTime, false);
@@ -64,4 +66,25 @@ test('upload target is revealed and pointer bubble stays within a narrow viewpor
   assert.ok(bubble.props.style.left + bubble.props.style.width <= 375);
   assert.ok(bubble.props.style.top >= 0);
   unregister(); button(nodes, 'tourSkip').props.onPress(); h.render();
+});
+
+test('notification is part of the tour, fires once on entry, and stops after leaving', () => {
+  const h = setup();
+  let nodes = h.render();
+  assert.equal(h.pings.length, 0);
+  for (let i = 0; i < 5; i++) { button(nodes, 'tourNext').props.onPress(); nodes = h.render(); }
+  assert.ok(nodes.some(n => n.props.children === 'tourNotificationsTitle'));
+  assert.equal(h.pings.length, 1);
+  assert.equal(h.pings[0].title, 'tourDemoNotificationTitle');
+  assert.equal(h.pings[0].isActive(), true);
+  h.render(); h.render();
+  assert.equal(h.pings.length, 1);
+  button(nodes, 'back').props.onPress(); nodes = h.render();
+  assert.equal(h.pings[0].isActive(), false);
+  button(nodes, 'tourNext').props.onPress(); nodes = h.render();
+  assert.equal(h.pings.length, 1);
+  button(nodes, 'tourSkip').props.onPress(); h.render();
+  assert.equal(h.pings[0].isActive(), false);
+  const skipped = setup(); button(skipped.render(), 'tourSkip').props.onPress(); skipped.render();
+  assert.equal(skipped.pings.length, 0);
 });

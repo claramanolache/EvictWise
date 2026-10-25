@@ -3,10 +3,11 @@ import { Platform } from 'react-native';
 import type { CalendarEvent } from "@/types";
 
 // --- Permission Handling ---
-export async function requestNotificationPermissions() {
+export async function requestNotificationPermissions(notifyOnDenial = true) {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
+      sound: 'default',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#FF231F7C',
@@ -15,7 +16,7 @@ export async function requestNotificationPermissions() {
 
   const { status } = await Notifications.requestPermissionsAsync();
   if (status !== 'granted') {
-    alert('You need to enable notifications in your settings.');
+    if (notifyOnDenial) alert('You need to enable notifications in your settings.');
     return false;
   }
   return true;

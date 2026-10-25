@@ -1,3 +1,4 @@
+import { sendDemoNotification, type DemoNotificationResult } from "@/events/demoNotification";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { usePathname } from "expo-router";
@@ -15,6 +16,7 @@ export const TOUR_STEPS = [
   { target: "menuProfile", title: "menuProfile", description: "tourProfileBody", menu: true },
   { target: "menuChat", title: "menuChat", description: "tourChatBody", menu: true },
   { target: "menuCalendar", title: "menuCalendar", description: "tourCalendarBody", menu: true },
+  { target: "menuCalendar", title: "tourNotificationsTitle", description: "tourNotificationsBody", menu: true },
   { target: "menuLawyerConnect", title: "menuLawyerConnect", description: "tourLawyersBody", menu: true },
   { target: "upload", title: "tourReadyTitle", description: "tourReadyBody", menu: false },
 ] as const;
@@ -39,6 +41,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const active = firstTime && pathname === "/profile";
   const [step, setStep] = useState(0);
+  const [demoResult, setDemoResult] = useState<DemoNotificationResult | null>(null);
+  const demoAttempted = useRef(false);
+  const demoActive = useRef(false);
   const [rect, setRect] = useState<Rect | null>(null);
   const [bubbleHeight, setBubbleHeight] = useState(240);
   const targets = useRef(new Map<string, Target>());
@@ -49,6 +54,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const theme = getTheme(useAppColorScheme());
   const { width, height } = useWindowDimensions();
   const current = TOUR_STEPS[step];
+  const isNotificationStep = current.title === "tourNotificationsTitle";
+  demoActive.current = active && isNotificationStep;
+  useEffect(() => () => { demoActive.current = false; }, [active]);
   const register = useCallback((name: string, target: Target) => {
     targets.current.set(name, target);
     return () => { if (targets.current.get(name) === target) targets.current.delete(name); };
@@ -82,7 +90,18 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; clearInterval(timer); };
   }, [active, current, setMenuOpen, width, height]);
 
-  function finish() { dispatch(viewFirstTime()); setStep(0); }
+  function goToStep(next: number) {
+    const enteringDemo = TOUR_STEPS[next]?.title === "tourNotificationsTitle";
+    demoActive.current = active && enteringDemo;
+    setStep(next);
+    if (!enteringDemo && demoAttempted.current && demoResult === null) setDemoResult("cancelled");
+    if (enteringDemo && !demoAttempted.current) {
+      demoAttempted.current = true;
+      void sendDemoNotification(t("tourDemoNotificationTitle"), t("tourDemoNotificationBody"), () => demoActive.current)
+        .then(result => { if (demoActive.current) setDemoResult(result); });
+    }
+  }
+  function finish() { demoActive.current = false; dispatch(viewFirstTime()); setStep(0); }
   const margin = 16;
   const bubbleWidth = Math.min(360, Math.max(0, width - margin * 2));
   const visibleRect = rect && rect.y < height && rect.y + rect.height > 0 ? rect : null;
@@ -106,12 +125,17 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
               <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{t("tourStep")} {step + 1} / {TOUR_STEPS.length}</Text>
               <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ color: theme.textHeading, fontSize: 22, fontWeight: "600", lineHeight: 28 }}>{t(current.title)}</Text>
               <Text style={{ color: theme.text, fontSize: 15, lineHeight: 24 }}>{t(current.description)}</Text>
+              {isNotificationStep && <View accessibilityLiveRegion="polite" style={{ padding: 14, gap: 8, borderRadius: 12, borderWidth: 1, borderColor: theme.backgroundAccent, backgroundColor: theme.backgroundSelected }}>
+                <Text style={{ color: theme.textHeading, fontSize: 16, fontWeight: "600" }}>{t("tourDemoNotificationTitle")}</Text>
+                <Text style={{ color: theme.text, lineHeight: 22 }}>{t("tourDemoNotificationBody")}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{t(demoResult === "sent" ? "tourDemoSent" : demoResult === null ? "tourDemoPending" : "tourDemoPreview")}</Text>
+              </View>}
             </ScrollView>
             <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
               <Pressable accessibilityRole="button" onPress={finish} style={{ paddingVertical: 12, paddingRight: 8 }}><Text style={{ color: theme.textSecondary }}>{t("tourSkip")}</Text></Pressable>
               <View style={{ flex: 1 }} />
-              {step > 0 && <Pressable accessibilityRole="button" onPress={() => setStep(value => value - 1)} style={{ padding: 12 }}><Text style={{ color: theme.text }}>{t("back")}</Text></Pressable>}
-              <Pressable accessibilityRole="button" onPress={() => step === TOUR_STEPS.length - 1 ? finish() : setStep(value => value + 1)} style={{ padding: 12, borderRadius: 10, backgroundColor: theme.backgroundAccent }}>
+              {step > 0 && <Pressable accessibilityRole="button" onPress={() => goToStep(step - 1)} style={{ padding: 12 }}><Text style={{ color: theme.text }}>{t("back")}</Text></Pressable>}
+              <Pressable accessibilityRole="button" onPress={() => step === TOUR_STEPS.length - 1 ? finish() : goToStep(step + 1)} style={{ padding: 12, borderRadius: 10, backgroundColor: theme.backgroundAccent }}>
                 <Text style={{ color: theme.textOnAccent, fontWeight: "600" }}>{t(step === TOUR_STEPS.length - 1 ? "tourStart" : "tourNext")}</Text>
               </Pressable>
             </View>
