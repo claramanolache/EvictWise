@@ -295,7 +295,7 @@ Chat now uses an authenticated server endpoint (`POST /api/auth/chat`) to retrie
 3. Run `npm run rag:index` and check its file/chunk counts. Repeat after changing or deleting documents. The command skips unchanged chunks, replaces changed chunks, and removes deleted sources. Failures preserve the prior index.
 4. Start/restart the API with `npm run server`, or use `npm run web` to launch the development app/API. An already running API must be restarted once after this code update. Later index updates do not require a restart.
 
-The default embedding model is `gemini-embedding-001`; `RAG_EMBEDDING_MODEL` overrides it. Changing the model requires rebuilding the index. The default generation model is `gemini-3.8-flash`, configurable through `RAG_CHAT_MODEL` in `server/.env`. See the [Gemini compatibility documentation](https://ai.google.dev/gemini-api/docs/openai).
+The default embedding model is `gemini-embedding-001`; `RAG_EMBEDDING_MODEL` overrides it. Changing the model requires rebuilding the index. The default generation model is `gemini-3.5-flash`, configurable through `RAG_CHAT_MODEL` in `server/.env`. See the [Gemini compatibility documentation](https://ai.google.dev/gemini-api/docs/openai).
 
 ### How retrieval works
 
@@ -328,3 +328,15 @@ RAG uses the existing `openai` npm package as a transport to Google's documented
 ### Text search when embeddings are unavailable
 
 `npm run rag:index:text` builds a local SQLite full-text index without an API key or embedding quota. `npm run rag:index` now publishes that text index before attempting vector embeddings. Chat uses text retrieval when the vector index is empty, vector search returns no matches, or embedding requests hit a 429 rate limit. Responses still use Gemini and include retrieved citations. Text retrieval uses stemming and keyword relevance; it does not provide the same multilingual or semantic matching as vector search. Re-run indexing after changing source files. An empty index is reported as a setup issue rather than missing legal evidence.
+
+### RAG reliability and migration notes
+
+Chat defaults to `gemini-3.5-flash`, with one fallback attempt to `gemini-3.1-flash-lite` for temporary provider failures. Configure `RAG_CHAT_FALLBACK_MODEL=` to disable fallback. Requests have bounded timeouts; invalid credentials and invalid request schemas are not retried against another model. Startup verifies the API exposes RAG chat rather than reusing an older account-only server.
+
+Indexing saves successful embedding batches in `embedding_cache`. After a quota failure, rerun `npm run rag:index` to reuse completed work. The indexing command waits for up to three attempts per rate-limited batch and prints progress. Retrieval only sees complete vector snapshots. Source fingerprints prevent an older vector snapshot from serving deleted/changed material after text indexing succeeds but embedding fails.
+
+Embedding input now excludes repeated provenance headers (`body-v1`). Existing vector snapshots require a rebuild; text retrieval remains available in the meantime. Source metadata is still preserved in retrieved excerpts and citations. Text fallback also covers embedding timeouts and temporary service errors. Gemini can group citations, but every cited ID must still belong to the retrieved source set. This validation checks references, not the truth or completeness of every generated legal claim.
+
+Large saved profiles are shortened as valid JSON with an explicit truncation flag, keeping both primary documents and deadline metadata within the context limit. Source PDFs with blank pages no longer fail the entire corpus; empty pages emit a warning for OCR review, and PDFs with no extractable text still fail. Review these warnings because a page without text may contain a scanned image.
+
+RAG answers now render explicit inline source citations as clickable Markdown links. The server replaces each validated `[S1]` marker with the URL stored in the source provenance, never a model-authored destination. The expandable source list includes document titles, original URLs, excerpts, and page/passage numbers. Sources without a web URL open the local excerpt in the chat UI. Translation protects citation links and restores their original destinations; if a citation marker is lost, the original answer remains visible with the existing translation-error message. Citation checks validate source identity, not whether every legal claim is correct.

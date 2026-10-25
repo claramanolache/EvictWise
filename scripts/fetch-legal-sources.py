@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import socket
+import sys
 import urllib.request
 from urllib.parse import urlparse
 from html.parser import HTMLParser
@@ -95,9 +96,17 @@ def fetch(entry):
             previous = json.loads(metadata_path.read_text())
             if previous.get('sha256') == metadata['sha256'] and previous.get('resolved_url') == final:
                 metadata['retrieved_at'] = previous['retrieved_at']
+        if not target.parent.resolve().is_relative_to(KNOWLEDGE):
+            raise ValueError('Imported directory must stay within knowledge folder')
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix('.tmp'); temporary.write_bytes(data); temporary.replace(target)
-        target.with_suffix(target.suffix + '.source.json').write_text(json.dumps(metadata, indent=2) + '\n')
+        temporary_metadata = target.with_suffix('.metadata.tmp')
+        temporary_metadata.write_text(json.dumps(metadata, indent=2) + '\n')
+        temporary_metadata.replace(metadata_path)
+        # A URL can switch from HTML to PDF; never retain the old text alongside it.
+        other = target.with_suffix('.pdf' if extension == '.txt' else '.txt')
+        other.unlink(missing_ok=True)
+        other.with_suffix(other.suffix + '.source.json').unlink(missing_ok=True)
         return {**result, 'status': 'downloaded', 'file': str(target.relative_to(KNOWLEDGE)), 'bytes': len(data)}
     except Exception as error:
         return {**result, 'status': 'failed', 'error': str(error)}
@@ -105,13 +114,20 @@ def fetch(entry):
 def main():
     entries = json.loads((KNOWLEDGE / 'manifest.json').read_text())
     for entry in entries:
-        catalog = KNOWLEDGE / entry['path']
+        catalog = (KNOWLEDGE / entry['path']).resolve()
+        if not catalog.is_relative_to(KNOWLEDGE):
+            raise ValueError('Catalog path is outside knowledge folder')
         if catalog.exists():
             match = re.search(r'^jurisdiction:\s*"?([^\n"]+)', catalog.read_text(), re.M)
             if match: entry['jurisdiction'] = match.group(1)
     overrides = ROOT / 'server/rag/source-links.json'
     entries.extend(json.loads(overrides.read_text()) if overrides.exists() else [])
-    entries = list({item['url']: item for item in entries}.values())
+    unique = {}
+    for item in entries:
+        previous = unique.get(item['url'])
+        if previous is None or item.get('local_file'):
+            unique[item['url']] = item
+    entries = list(unique.values())
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(fetch, entries))
     report = ROOT / 'server/private/source-import-report.json'
@@ -120,5 +136,6 @@ def main():
     for item in results: print(f"{item['status']}: {item['title']}" + (f" — {item['error']}" if 'error' in item else ''))
     print(json.dumps({status: sum(r['status'] == status for r in results) for status in ['downloaded', 'supplied-locally', 'needs-specific-url', 'failed']}))
     print(f'Report: {report}')
+    if any(item['status'] == 'failed' for item in results): sys.exit(1)
 
 if __name__ == '__main__': main()

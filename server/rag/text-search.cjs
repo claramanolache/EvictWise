@@ -1,15 +1,16 @@
-const { readDocuments, KNOWLEDGE_PATH } = require('./index.cjs');
+const { readDocuments, KNOWLEDGE_PATH, fingerprint } = require('./index.cjs');
 function ensureTextIndex(db) {
   db.exec("CREATE VIRTUAL TABLE IF NOT EXISTS legal_text USING fts5(id UNINDEXED, file UNINDEXED, page UNINDEXED, part UNINDEXED, text UNINDEXED, body, tokenize='porter unicode61')");
 }
-async function rebuildTextIndex(db, root = KNOWLEDGE_PATH) {
-  const records = await readDocuments(root);
+async function rebuildTextIndex(db, root = KNOWLEDGE_PATH, records = null) {
+  records ??= await readDocuments(root);
   db.exec('BEGIN IMMEDIATE');
   try {
     db.exec('DROP TABLE IF EXISTS legal_text');
     ensureTextIndex(db);
     const insert = db.prepare('INSERT INTO legal_text VALUES (?, ?, ?, ?, ?, ?)');
-    for (const r of records) insert.run(r.id,r.file,r.page,r.part,r.text,r.text.startsWith('Source: ') ? r.text.slice(r.text.indexOf('\n\n')+2) : r.text);
+    for (const r of records) insert.run(r.id,r.file,r.page,r.part,r.text,r.text.startsWith('Source: ') && r.text.includes('\n\n') ? r.text.slice(r.text.indexOf('\n\n')+2) : r.text);
+    db.prepare('INSERT OR REPLACE INTO settings VALUES (?, ?)').run('textFingerprint',fingerprint(records));
     db.exec('COMMIT');
   } catch(error) { db.exec('ROLLBACK'); throw error; }
   return records.length;

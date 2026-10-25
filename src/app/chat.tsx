@@ -87,6 +87,10 @@ export default function Index() {
 
   const sendMessage = async () => {
     if (!inputText.trim() || submitting.current) return;
+    if (inputText.length > 6000) {
+      dispatch(addMessage({ type: "error", id: Date.now().toString(), error: "Please shorten your message to 6,000 characters or fewer." }));
+      return;
+    }
     submitting.current = true;
     nearBottom.current = true;
     setInputHeight(44);
@@ -103,12 +107,15 @@ export default function Index() {
     setLoading(true);
 
     try {
-      const history = serializeMessages([...messages, userMessage]).slice(-20);
+      const history = serializeMessages([...messages, userMessage]).slice(-20).map(message => ({
+        ...message, content: typeof message.content === "string" && message.content.length > 6000
+          ? message.content.slice(0, 5950) + "\n[Earlier message truncated]" : message.content,
+      }));
       // Keep the newest conversation within the server's context budget.
       while (history.length > 1 && JSON.stringify(history).length > 28000) history.shift();
       const response = await chatRequest({
         messages: history,
-        profileContext: buildChatProfileContext(profile).slice(0, 24000),
+        profileContext: buildChatProfileContext(profile),
       });
 
       const assistantMessage: Message = {

@@ -1,3 +1,4 @@
+import { protectCitationLinks } from "@/utils/citationTranslation";
 import { useAppColorScheme as useColorScheme } from "@/context/ThemeContext";
 import { getTheme, Spacing } from "@/constants/theme";
 import { themeToMarkdown } from "@/md";
@@ -180,10 +181,11 @@ export default function MessageRender({
 
     if (conversationTranslation && content?.trim()) {
       setTranslationLoading(true);
-      translateMessage(content, "auto", conversationTranslation.language)
+      const citations = protectCitationLinks(content);
+      translateMessage(citations.text, "auto", conversationTranslation.language)
         .then((result) => {
           if (request !== translationRequest.current) return;
-          setTranslatedText(result);
+          setTranslatedText(citations.restore(result));
           setShowTranslation(true);
         })
         .catch(() => {
@@ -247,6 +249,14 @@ export default function MessageRender({
       >
         {/* Message content */}
         <Markdown
+          onLinkPress={(url) => {
+            if (url.startsWith("evictwise-source:") && msg.sources?.some(source => url === `evictwise-source:${source.id}`)) {
+              setSourcesVisible(true);
+              return false;
+            }
+            if (msg.role === "assistant" && msg.sources?.length) return msg.sources.some(source => source.url === url);
+            return /^https?:\/\//i.test(url);
+          }}
           style={themeToMarkdown(msg.role === "user" ? { ...theme, text: theme.textUserBubble, textHeading: theme.textUserBubble, textSecondary: theme.textUserBubble } : theme)}
         >
           {displayedContent}
@@ -363,7 +373,10 @@ export default function MessageRender({
             <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{t("legalSources")} ({msg.sources.length}) {sourcesVisible ? "⌃" : "⌄"}</Text>
           </Pressable>
           {sourcesVisible && msg.sources.map(source => <View key={source.id} style={{ marginTop: 10, padding: 10, borderWidth: 1, borderColor: theme.border, borderRadius: 8 }}>
-            <Text selectable style={{ color: theme.textHeading, fontSize: 12 }}>[{source.id}] {source.file} · {source.page ? `${t("sourcePage")} ${source.page}` : `${t("sourcePassage")} ${source.part}`}</Text>
+            <Text selectable style={{ color: theme.textHeading, fontSize: 12 }}>[{source.id}] {source.title || source.file} · {source.page ? `${t("sourcePage")} ${source.page}` : `${t("sourcePassage")} ${source.part}`}</Text>
+            {source.url && <Markdown style={themeToMarkdown(theme)} onLinkPress={url => url === source.url && url.startsWith("https://")}>
+              {`[${source.url.replace(/[\[\]]/g, "")}](${"<" + source.url.replace(/</g, "%3C").replace(/>/g, "%3E") + ">"})`}
+            </Markdown>}
             <Text selectable style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 6 }}>{source.excerpt}</Text>
           </View>)}
         </View>}

@@ -43,7 +43,7 @@ test('loads server/.env independent of cwd and allows Expo preflight', async t =
   assert.equal(config.path, path.join(__dirname, '.env'));
   const url = await serve(t, app);
   const health = await fetch(`${url}/api/health`);
-  assert.deepEqual(await health.json(), { ok: true });
+  assert.deepEqual(await health.json(), { ok: true, capabilities: { ragChat: true } });
   const preflight = await fetch(`${url}/api/translate`, {
     method: 'OPTIONS',
     headers: { Origin: 'http://localhost:8081', 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' },
@@ -80,4 +80,13 @@ test('client distinguishes connection failures from API errors', async t => {
   await assert.rejects(client.translateText({ text: 'Hello', targetLanguage: 'fr' }), /Google credentials missing/);
   mock.mock.mockImplementation(async () => ({ ok: true, json: async () => ({ translations: [{ translatedText: 'Bonjour' }] }) }));
   assert.equal(await client.translateText({ text: 'Hello', targetLanguage: 'fr' }), 'Bonjour');
+});
+
+test('API routing and parser errors are JSON, and Unicode requests fit the context budget',async t=>{
+ const {app}=loadServer();const url=await serve(t,app);
+ for(const [body,status] of [['{',400],[JSON.stringify({text:'中'.repeat(54000)}),404],[JSON.stringify({text:'x'.repeat(320000)}),413]]) {
+  const response=await fetch(`${url}/api/missing`,{method:'POST',headers:{'Content-Type':'application/json'},body});
+  assert.equal(response.status,status);assert.match(response.headers.get('content-type'),/application\/json/);
+  assert.equal(typeof (await response.json()).error,'string');
+ }
 });

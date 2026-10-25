@@ -41,8 +41,12 @@ export async function chatRequest(body: { messages: unknown[]; profileContext: s
         : "The chat API returned an unexpected response. Check the API URL and restart the server.");
     }
     const result = await response.json().catch(() => { throw new Error("The chat API returned invalid JSON. Please try again."); });
-    if (!response.ok) throw new Error(result.error || "The legal knowledge service is unavailable.");
-    if (typeof result.content !== "string" || !Array.isArray(result.sources)) throw new Error("Invalid chat response.");
+    if (!response.ok) throw new Error(result?.error || "The legal knowledge service is unavailable.");
+    if (!result || typeof result.content !== "string" || !Array.isArray(result.sources) || result.sources.some((source: any) =>
+      !source || typeof source.id !== "string" || typeof source.file !== "string" || typeof source.excerpt !== "string" ||
+      (source.title !== undefined && typeof source.title !== "string") ||
+      (source.url != null && (typeof source.url !== "string" || !source.url.startsWith("https://"))) ||
+      !Number.isInteger(source.part) || (source.page !== null && !Number.isInteger(source.page)))) throw new Error("Invalid chat response.");
     return result;
   } catch (error) {
     if (error instanceof Error && error.name !== "TypeError" && error.name !== "AbortError") throw error;

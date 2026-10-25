@@ -27,6 +27,13 @@ async function isAccountApiReady(url) {
   } catch { return false; }
 }
 
+async function isChatApiReady(url) {
+  try {
+    const response = await fetch(`${url.replace(/\/$/, '')}/api/health`, { signal: AbortSignal.timeout(1000) });
+    return response.ok && (await response.json()).capabilities?.ragChat === true;
+  } catch { return false; }
+}
+
 async function main() {
   // Match Expo's development env precedence without printing credentials.
   const dotenv = require('dotenv');
@@ -76,6 +83,9 @@ async function main() {
     if (!stopping && !(await isAccountApiReady(process.env.EXPO_PUBLIC_AUTH_API_URL || apiUrl))) {
       throw new Error('The account API is unavailable or outdated. Restart the API with npm run server and check EXPO_PUBLIC_AUTH_API_URL. A translation-only server cannot support sign-in.');
     }
+    if (!stopping && !(await isChatApiReady(process.env.EXPO_PUBLIC_AUTH_API_URL || apiUrl))) {
+      throw new Error('The running API lacks RAG chat. Restart it with npm run server.');
+    }
     if (!stopping) {
       launch([require.resolve('expo/bin/cli'), 'start', ...process.argv.slice(2)]);
     }
@@ -86,4 +96,4 @@ async function main() {
 }
 
 if (require.main === module) void main();
-module.exports = { isTranslationApiReady, isAccountApiReady, main };
+module.exports = { isTranslationApiReady, isAccountApiReady, isChatApiReady, main };

@@ -34,3 +34,13 @@ test('subsequent calls reflect profile edits instead of retaining old document d
   profile.evictionNotice = { name: 'new.pdf', markdown: 'Updated' };
   assert.equal(parse(profile).evictionNotice.extractedText, 'Updated');
 });
+
+test('large context keeps parseable JSON, both primary documents and deadline metadata',()=>{
+ const profile={location:{city:'Palo Alto',state:'CA'},evictionNotice:{name:'notice.pdf',markdown:'N'.repeat(50000)},leaseAgreement:{name:'lease.pdf',markdown:'L'.repeat(50000)},additionalFiles:Array.from({length:20},()=>({name:'extra.txt',markdown:'X'.repeat(10000)})),events:[{name:'Hearing',date:[2026,0,15],document:'eviction'}]};
+ const text=output.buildChatProfileContext(profile);assert(text.length<=24000);
+ const data=JSON.parse(text.split('\n').slice(1).join('\n'));
+ assert.equal(data.contextTruncated,true);assert.equal(data.location.city,'Palo Alto');
+ assert(data.evictionNotice.extractedText);assert(data.leaseAgreement.extractedText);
+ assert.equal(data.extractedDeadlines[0].name,'Hearing');
+ assert.equal(profile.evictionNotice.markdown.length,50000);
+});

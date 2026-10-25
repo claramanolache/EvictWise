@@ -88,3 +88,70 @@ test('text retrieval answers when vector index is empty without embedding calls'
   await rebuildTextIndex(db,docs);
   assert.equal(searchText(db,'eviction').length,0);
 });
+
+test('failed rebuild checkpoints embeddings and resumes without paying for completed batches again', async t => {
+  const {db,docs}=fixture(t);
+  for(let i=0;i<40;i++) fs.writeFileSync(path.join(docs,`${i}.txt`),`Distinct source ${i}`);
+  let calls=0;
+  await assert.rejects(rebuild({db,root:docs,embedTexts:async texts=>{
+    if(++calls===2) throw Object.assign(Error('quota'),{status:429});
+    return texts.map(()=>[1,0]);
+  }}),/quota/);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM chunks').get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM embedding_cache').get().n,32);
+  const result=await rebuild({db,root:docs,embedTexts:async texts=>{
+    assert.equal(texts.length,8);return texts.map(()=>[1,0]);
+  }});
+  assert.equal(result.embedded,8);
+  assert.equal(result.chunks,40);
+});
+
+test('text refresh prevents using removed vectors after a failed embedding rebuild', async t=>{
+  const {rebuildTextIndex}=require('./text-search.cjs');
+  const {db,docs}=fixture(t);
+  fs.writeFileSync(path.join(docs,'old.txt'),'Eviction rule old source');
+  await rebuildTextIndex(db,docs);
+  await rebuild({db,root:docs,embedTexts:async texts=>texts.map(()=>[1,0])});
+  fs.unlinkSync(path.join(docs,'old.txt'));
+  fs.writeFileSync(path.join(docs,'new.txt'),'Eviction rule corrected source');
+  await rebuildTextIndex(db,docs);
+  const result=await answer({db,messages:[{role:'user',content:'eviction'}],profileContext:'',client:{
+    embeddings:{create:async()=>{throw Error('Stale vectors must not be used');}},
+    chat:{completions:{create:async()=>({choices:[{message:{content:'{"content":"New [S1]","sourceIds":["S1"]}'}}]})}}
+  }});
+  assert.equal(result.sources[0].file,'new.txt');
+});
+
+test('transient embedding outage uses text retrieval and truncated generations are rejected',async t=>{
+  const {rebuildTextIndex}=require('./text-search.cjs');
+  const {db,docs}=fixture(t);
+  fs.writeFileSync(path.join(docs,'law.txt'),'Eviction evidence');
+  await rebuildTextIndex(db,docs);
+  await rebuild({db,root:docs,embedTexts:async()=>[[1,0]]});
+  const client={embeddings:{create:async()=>{throw Object.assign(Error('unavailable'),{status:503});}},chat:{completions:{create:async()=>({choices:[{finish_reason:'stop',message:{content:'{"content":"Evidence [S1]","sourceIds":["S1"]}'}}]})}}};
+  assert.equal((await answer({db,client,messages:[{role:'user',content:'eviction'}],profileContext:''})).sources.length,1);
+  client.chat.completions.create=async()=>({choices:[{finish_reason:'length',message:{content:'{"content":"Evidence [S1]","sourceIds":["S1"]}'}}]});
+  await assert.rejects(answer({db,client,messages:[{role:'user',content:'eviction'}],profileContext:''}),/Incomplete/);
+});
+
+test('embedding input excludes repeated provenance and rejects symlinked metadata',async t=>{
+  const {db,docs}=fixture(t);
+  const filename=path.join(docs,'law.txt');
+  fs.writeFileSync(filename,'Actual body');
+  fs.writeFileSync(filename+'.source.json',JSON.stringify({title:'Title',resolved_url:'https://example.org',jurisdiction:'California',retrieved_at:'2026-01-01'}));
+  await rebuild({db,root:docs,embedTexts:async texts=>{assert.deepEqual(texts,['Actual body']);return [[1,0]];}});
+  fs.unlinkSync(filename+'.source.json');fs.symlinkSync(__filename,filename+'.source.json');
+  await assert.rejects(rebuild({db,root:docs,embedTexts:async()=>[]}),/Unsafe source metadata/);
+});
+
+test('grouped citations are normalized and unknown grouped IDs are rejected',async t=>{
+  const {rebuildTextIndex}=require('./text-search.cjs');const {db,docs}=fixture(t);
+  fs.writeFileSync(path.join(docs,'one.txt'),'Eviction evidence receipts.');
+  fs.writeFileSync(path.join(docs,'two.txt'),'Eviction court procedure.');
+  await rebuildTextIndex(db,docs);
+  let content='Evidence [S1, S2].';
+  const client={chat:{completions:{create:async()=>({choices:[{message:{content:JSON.stringify({content,sourceIds:['S1','S2']})}}]})}}};
+  const request={db,client,messages:[{role:'user',content:'eviction'}],profileContext:''};
+  const result=await answer(request);assert.equal(result.content,'Evidence [S1](<evictwise-source:S1>) [S2](<evictwise-source:S2>).');assert.equal(result.sources.length,2);
+  content='Evidence [S1, S99].';await assert.rejects(answer(request),/Invalid source citation/);
+});

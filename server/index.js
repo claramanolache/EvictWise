@@ -24,7 +24,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "300kb" }));
 
 // Authentication storage is opened only when an account endpoint is used.
 let auth;
@@ -36,7 +36,7 @@ app.use("/api/auth", (req, res, next) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, capabilities: { ragChat: true } });
 });
 
 app.post("/api/translate", async (req, res) => {

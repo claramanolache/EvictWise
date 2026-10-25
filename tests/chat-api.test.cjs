@@ -17,3 +17,10 @@ test('valid JSON chat responses still work',async()=>{
  const api=client(new Response(JSON.stringify({content:'Answer',sources:[]}),{headers:{'content-type':'application/json'}}));
  assert.equal((await api.chatRequest({messages:[],profileContext:''})).content,'Answer');
 });
+
+test('null JSON and invalid source shapes produce controlled errors',async()=>{
+ for(const data of [null,{content:'Answer',sources:[null]},{content:'Answer',sources:[{id:'S1'}]}]) {
+  const api=client(new Response(JSON.stringify(data),{headers:{'content-type':'application/json'}}));
+  await assert.rejects(api.chatRequest({messages:[],profileContext:''}),/Invalid chat response/);
+ }
+});
