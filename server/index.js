@@ -119,6 +119,16 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
+// API failures must remain JSON, including unknown routes and body-parser errors.
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: "API route not found. Check the URL and restart the API server." });
+});
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  const status = error.type === "entity.too.large" ? 413 : error.type === "entity.parse.failed" ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? "Request is too large. Please shorten your message." : status === 400 ? "Invalid JSON request." : "The API request failed. Please try again." });
+});
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Translation server running at http://localhost:${PORT}`);

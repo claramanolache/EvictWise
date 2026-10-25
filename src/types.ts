@@ -6,11 +6,14 @@ export type ErrorMessage = {
   error: string;
 };
 
+export type ChatSource = { id: string; file: string; page: number | null; part: number; excerpt: string };
+
 export type ChatMessage = {
   type: "chat";
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: ChatSource[];
 };
 
 export type LoadingMessage = {

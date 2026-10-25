@@ -62,7 +62,11 @@
     "ios": "node_modules/.bin/expo run:ios",
     "web": "node scripts/start-development.cjs --web",
     "lint": "node_modules/.bin/expo lint",
-    "test:auth": "node --test server/auth.test.cjs"
+    "test:auth": "node --test server/auth.test.cjs",
+    "rag:index": "node scripts/index-legal-knowledge.cjs",
+    "test:rag": "node --test server/rag/*.test.cjs",
+    "rag:fetch": "python3 scripts/fetch-legal-sources.py",
+    "rag:index:text": "node scripts/index-legal-knowledge.cjs --text-only"
   },
   "private": true,
   "engines": {

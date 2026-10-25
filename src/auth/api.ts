@@ -24,3 +24,28 @@ export async function accountRequest(path: string, body?: Record<string, string>
   if (path === "logout") nativeToken = null;
   return data;
 }
+
+export async function chatRequest(body: { messages: unknown[]; profileContext: string }): Promise<{ content: string; sources: import("@/types").ChatSource[] }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+  try {
+    const response = await fetch(`${API_URL}/api/auth/chat`, {
+      method: "POST", credentials: "include", signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...(Platform.OS !== "web" && nativeToken ? { Authorization: `Bearer ${nativeToken}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(response.status === 404
+        ? "The chat API is outdated or its URL is incorrect. Restart the API with npm run server."
+        : "The chat API returned an unexpected response. Check the API URL and restart the server.");
+    }
+    const result = await response.json().catch(() => { throw new Error("The chat API returned invalid JSON. Please try again."); });
+    if (!response.ok) throw new Error(result.error || "The legal knowledge service is unavailable.");
+    if (typeof result.content !== "string" || !Array.isArray(result.sources)) throw new Error("Invalid chat response.");
+    return result;
+  } catch (error) {
+    if (error instanceof Error && error.name !== "TypeError" && error.name !== "AbortError") throw error;
+    throw new Error("Cannot reach the legal knowledge service. Please try again.");
+  } finally { clearTimeout(timer); }
+}

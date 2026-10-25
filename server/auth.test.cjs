@@ -92,3 +92,8 @@ test('registration rejects eight characters and accepts nine characters', async 
   const accepted = await h.request('register', { username: 'boundary_user', password: 'ninechars' });
   assert.equal(accepted.status, 200);
 });
+
+test('RAG chat requires a session before accessing knowledge or generation', async t => {
+  const h = await setup(t);
+  assert.equal((await h.request('chat', { messages: [{ role: 'user', content: 'Help' }] })).status, 401);
+});
