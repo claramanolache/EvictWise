@@ -1,0 +1,81 @@
+import type { CaseStage } from './types';
+
+// California residential eviction education only. Reviewed against California
+// Courts Self-Help on 2026-10-24. No deadline arithmetic or outcome prediction.
+export const CA_EVICTION_GUIDE = 'https://selfhelp.courts.ca.gov/eviction-tenant';
+export const CASE_STAGES: { id: CaseStage; title: string; meaning: string; next: string; documents: string; resource: string }[] = [
+  { id: 'notice', title: 'caseStageNotice', meaning: 'caseNoticeMeaning', next: 'caseNoticeNext', documents: 'caseNoticeDocuments', resource: `${CA_EVICTION_GUIDE}/notice` },
+  { id: 'court_started', title: 'caseStageCourt', meaning: 'caseCourtMeaning', next: 'caseCourtNext', documents: 'caseCourtDocuments', resource: `${CA_EVICTION_GUIDE}/respond` },
+  { id: 'response', title: 'caseStageResponse', meaning: 'caseResponseMeaning', next: 'caseResponseNext', documents: 'caseResponseDocuments', resource: `${CA_EVICTION_GUIDE}/respond` },
+  { id: 'hearing', title: 'caseStageHearing', meaning: 'caseHearingMeaning', next: 'caseHearingNext', documents: 'caseHearingDocuments', resource: `${CA_EVICTION_GUIDE}/trial` },
+  { id: 'after_decision', title: 'caseStageAfter', meaning: 'caseAfterMeaning', next: 'caseAfterNext', documents: 'caseAfterDocuments', resource: CA_EVICTION_GUIDE },
+];
+export type CaseTask = { id: string; label: string; route: '/profile' | '/chat' | '/calendar' | '/lawyer-connect' };
+const upload: CaseTask = { id: 'organize-documents', label: 'caseTaskDocuments', route: '/profile' };
+const deadlines: CaseTask = { id: 'confirm-deadlines', label: 'caseTaskDeadlines', route: '/calendar' };
+const lawyer: CaseTask = { id: 'find-legal-help', label: 'caseTaskLawyer', route: '/lawyer-connect' };
+export const CASE_TASKS: Record<CaseStage | 'unknown', CaseTask[]> = {
+  unknown: [upload, lawyer],
+  notice: [upload, { id: 'understand-notice', label: 'caseTaskNotice', route: '/chat' }, deadlines, lawyer],
+  court_started: [upload, { id: 'review-response-options', label: 'caseTaskResponse', route: '/chat' }, deadlines, lawyer],
+  response: [upload, { id: 'keep-filed-response', label: 'caseTaskFiled', route: '/profile' }, deadlines, lawyer],
+  hearing: [upload, { id: 'organize-hearing', label: 'caseTaskHearing', route: '/chat' }, deadlines, lawyer],
+  after_decision: [upload, { id: 'review-order', label: 'caseTaskOrder', route: '/chat' }, deadlines, lawyer],
+};
+export const CASE_TEXT: Record<string, string> = {
+  caseCaliforniaOnly: 'General California guidance. Set up your case to confirm the rental property jurisdiction.',
+  caseSaving: 'Saving…', caseIntakeRestart: 'Start over', caseChooseStage: 'Choose a stage to explore',
+  caseConflictStageResponse: 'Court Response describes a filed response. Confirm the response status or choose another stage.',
+  caseConflictResponse: 'You reported filing a response. Choose Court Response or a later stage, or correct the response status.',
+  caseNotApplicable: 'Case guidance not configured', caseSelectTask: 'Complete task',
+  menuCaseStatus: 'Case Status', caseCurrent: 'Current status', caseNoCase: 'No case set up yet', caseSetup: 'Set Up My Case',
+  caseIntro: 'Keep track of what you know, what needs checking, and what to do next.',
+  caseStorage: 'Saved privately to this account on this device. Case details are not synced between devices.',
+  caseUnknown: 'Unknown / not yet confirmed', caseStatusUnknown: 'Your stage is not yet clear. Check your paperwork or get legal help to identify where your case stands.',
+  caseUserReported: 'User-reported', caseDocumentSupported: 'Document-supported', caseVerified: 'Verified',
+  caseEvidenceHelp: 'Intake answers and edits are user-reported. Uploading a file alone does not verify a stage or deadline.',
+  caseSource: 'Source', caseReviewedBy: 'Reviewed by', caseUpdated: 'Last updated',
+  caseStageNotice: 'Notice Received', caseStageCourt: 'Court Case Started', caseCourtPapersReceived: 'Court Papers Received',
+  caseStageResponse: 'Court Response', caseStageHearing: 'Hearing / Decision', caseStageAfter: 'After Decision',
+  caseNoticeMeaning: 'A landlord notice asks you to take action or leave. A notice is different from court papers.',
+  caseNoticeNext: 'A court case may follow. Your options depend on the notice and your situation; ask for help reviewing it.',
+  caseNoticeDocuments: 'Landlord notice, lease, and any record of how and when the notice arrived.',
+  caseCourtMeaning: 'You report receiving court papers or that an eviction case has started. Check the Summons and Complaint and ask for help with response options.',
+  caseCourtNext: 'A response can let you participate. Without a response, the court may decide without hearing your side. Confirm the applicable deadline promptly.',
+  caseCourtDocuments: 'Summons, Complaint, and any proof or record of service.',
+  caseResponseMeaning: 'You report that a response was filed. Keep the filed copy and confirm its status with the court or legal help.',
+  caseResponseNext: 'Next steps depend on what was filed. A trial may be requested; check court notices and discuss your options with legal help.',
+  caseResponseDocuments: 'Filed response, filing receipt, proof of service, and court notices.',
+  caseHearingMeaning: 'You report a hearing or trial stage. Confirm the date, location, and instructions on your court notice.',
+  caseHearingNext: 'The court may make a decision. Any agreement or decision needs careful review; the app cannot predict the result.',
+  caseHearingDocuments: 'Hearing notice, filed papers, relevant evidence, and any written court order.',
+  caseAfterMeaning: 'You report that a decision has been issued. Read the written decision with legal help to understand what it requires.',
+  caseAfterNext: 'Options depend on the written decision and your circumstances. Get help promptly with any further steps and time limits.',
+  caseAfterDocuments: 'Judgment or order, any sheriff notice, and relevant court filings.',
+  caseTracker: 'Explore the process', caseTrackerHelp: 'Tap a stage to explore it. This does not change your saved status. Green shows your reported progress, not proof that each earlier step occurred.',
+  caseExploring: 'Exploring', caseCurrentMarker: 'Current', caseEarlierMarker: 'Earlier stage', caseFutureMarker: 'Future stage',
+  caseOverview: 'Overview', caseNextSteps: 'Next Steps', caseDetails: 'Case Details', caseMeaning: 'What This Means', caseWhatNext: 'What Could Happen Next',
+  caseDocuments: 'Relevant documents', casePossibleSteps: 'Possible next steps', caseResources: 'California Courts: official guide',
+  caseGeneralGuide: 'California Courts eviction guide', caseResourceFailed: 'Could not open this resource. Please try again.',
+  caseDeadlines: 'Important Deadlines', caseDeadlineUnverified: 'Deadline not yet verified', caseDeadlineHelp: 'Dates extracted from uploads are unverified unless a source and reviewer have confirmed them. No deadline is calculated from your stage or service date.',
+  caseCalendar: 'Open calendar', caseChat: 'Ask the chatbot', caseUpload: 'Upload or view documents', caseLawyer: 'Find legal help',
+  caseTaskDocuments: 'Organize and upload relevant documents', caseTaskDeadlines: 'Confirm dates against court papers with legal help', caseTaskLawyer: 'Review legal-help options',
+  caseTaskNotice: 'Review what the notice says and list your questions', caseTaskResponse: 'Discuss response options with legal help',
+  caseTaskFiled: 'Keep your filed response and filing confirmation', caseTaskHearing: 'Organize evidence and questions for the hearing', caseTaskOrder: 'Review the written order and ask about next steps',
+  caseTasksHelp: 'Checking a task records your progress only. It does not file papers, verify a deadline, or change your case stage.', caseTaskOpen: 'Open', caseTasksCompleted: 'tasks completed',
+  caseEdit: 'Edit Case Details', caseSave: 'Save case details', caseSaved: 'Case details saved for this account.', caseSaveFailed: 'Could not save on this device. Your changes are in memory; try saving again before leaving.',
+  caseState: 'State', caseCounty: 'County', caseCity: 'City', caseJurisdictionHelp: 'Enter the rental property’s location. Prefilled profile information may need correcting.',
+  caseNoticeType: 'Document / notice type', caseServiceDate: 'Service date (YYYY-MM-DD, if known)', caseServiceMethod: 'Service method', caseNumber: 'Court case number',
+  caseResponseFiled: 'Response filed status', caseRepresentation: 'Legal representation status', caseReportedStage: 'Reported stage',
+  casePersonal: 'Handed to me', caseSubstituted: 'Given to someone else and mailed', casePostingMail: 'Posted and mailed', caseOther: 'Other',
+  caseNoLawyer: 'No legal representative', caseSeekingLawyer: 'Seeking legal help', caseHasLawyer: 'Represented',
+  caseYes: 'Yes', caseNo: 'No', caseUnsure: 'Not sure', caseDateInvalid: 'Enter a real service date as YYYY-MM-DD, or leave it blank if unknown.', caseDateFuture: 'A reported service date cannot be in the future.',
+  caseIntake: 'Find your likely stage', caseIntakeHelp: 'Answer only what you know. This suggests a stage from your answers; it is not a court verification.',
+  caseQuestionNotice: 'Have you received a written notice from your landlord?', caseQuestionCourt: 'Have you received eviction court papers (such as a Summons and Complaint)?',
+  caseQuestionResponse: 'Have you filed a response with the court?', caseQuestionHearing: 'Has the court scheduled or held a hearing or trial?', caseQuestionDecision: 'Has the court issued a decision or judgment?',
+  caseLikelyStage: 'Likely stage from your answers', caseIntakeApply: 'Use this stage', caseIntakeConfirm: 'Review and save the details below to create or update your case.',
+  caseUnsupported: 'California guidance is shown only for California rental properties. Your details can be saved, but this app has not configured guidance for your jurisdiction.',
+  caseDemo: 'Hypothetical California case — development/testing only', caseDemoOpen: 'View hypothetical case', caseDemoClose: 'Return to my case',
+  caseDemoHelp: 'This fictional example is separate from your case. It has no real deadlines, court number, or uploaded documents. Changes here are not saved to your account.',
+  caseDemoNotice: 'Summons and Complaint (fictional example)', caseDemoDate: 'Not recorded — hypothetical example',
+};

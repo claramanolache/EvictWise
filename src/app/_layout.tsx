@@ -28,7 +28,7 @@ function Routes() {
     <Stack.Protected guard={!user}><Stack.Screen name="welcome" /></Stack.Protected>
     <Stack.Protected guard={Boolean(user)}>
       <Stack.Screen name="profile" /><Stack.Screen name="index" /><Stack.Screen name="chat" />
-      <Stack.Screen name="calendar" /><Stack.Screen name="lawyer-connect" />
+      <Stack.Screen name="case-status" /><Stack.Screen name="calendar" /><Stack.Screen name="lawyer-connect" />
     </Stack.Protected>
   </Stack>;
   return <MenuProvider>{user ? <GuidedTourProvider><CondensedInfoProvider>{stack}</CondensedInfoProvider></GuidedTourProvider> : stack}</MenuProvider>;

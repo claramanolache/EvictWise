@@ -1,3 +1,4 @@
+import type { CaseRecord, CaseDetails } from "@/case/types";
 import type { ReportEdits } from "@/utils/condensedInfoEdits";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
@@ -17,6 +18,7 @@ export interface LocationData {
 import type { LawyerProfile } from "@/utils/lawyerRecommendations";
 
 export interface State {
+  caseStatus?: CaseRecord;
   lawyerPreferences?: LawyerProfile;
   firstTime: boolean;
   preferredLanguage?: string;
@@ -52,6 +54,16 @@ export const slice = createSlice({
   name: "app",
   initialState,
   reducers: {
+    saveCaseDetails: (state, action: PayloadAction<{ details: CaseDetails; updatedAt: string }>) => {
+      state.caseStatus = { version: 1, details: action.payload.details, updatedAt: action.payload.updatedAt,
+        statusEvidence: { kind: action.payload.details.stage === "unknown" ? "unknown" : "user_reported" },
+        completedTasks: state.caseStatus?.completedTasks ?? [] };
+    },
+    toggleCaseTask: (state, action: PayloadAction<string>) => {
+      if (!state.caseStatus) return;
+      const completed = state.caseStatus.completedTasks;
+      state.caseStatus.completedTasks = completed.includes(action.payload) ? completed.filter(id => id !== action.payload) : [...completed, action.payload];
+    },
     setLawyerPreferences: (state, action: PayloadAction<LawyerProfile>) => {
       state.lawyerPreferences = action.payload;
     },
@@ -140,6 +152,8 @@ export const slice = createSlice({
 });
 
 export const {
+  saveCaseDetails,
+  toggleCaseTask,
   setResolvedLocationCoordinates,
   setLawyerPreferences,
   setPreferredLanguage,

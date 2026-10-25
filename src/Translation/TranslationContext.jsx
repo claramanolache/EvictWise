@@ -1,3 +1,4 @@
+import { CASE_TEXT } from "@/case/config";
 import { useDispatch, useSelector } from "react-redux";
 import { setPreferredLanguage } from "@/slice";
 import { LANGUAGES } from "./languages";
@@ -49,6 +50,7 @@ function writeStorage(key, value) {
 const ORIGINAL_LANGUAGE = "en";
 
 const ENGLISH_INTERFACE = {
+  ...CASE_TEXT,
   lawyerTestPrice: "Fabricated test price",
   lawyerTestPriceUnit: "USD per consultation",
   lawyerTestPriceDisclosure: "Prices are fabricated for testing purposes only. They are not actual fees, estimates, or quotes from these organizations. Recommendations use these fictional prices.",
@@ -326,7 +328,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v43-${language}`;
+    const cacheKey = `interface-v44-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

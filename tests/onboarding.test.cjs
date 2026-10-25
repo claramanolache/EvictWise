@@ -57,14 +57,19 @@ test('persisted profiles are separated by account and never read the legacy unow
   const memory = new Map([['persist:app', 'legacy private profile']]);
   const storage = { getItem: async key => memory.get(key) ?? null, setItem: async (key, value) => { memory.set(key, value); }, removeItem: async key => { memory.delete(key); } };
   const reducerModule = load('slice.ts', { '@/constants/assistantAI/prompt': { initialMessage: { id: 'initial', type: 'chat', role: 'assistant', content: 'Welcome' } } });
-  const { createAppStore } = load('store.ts', { './slice': reducerModule, 'redux-persist/lib/storage': storage }, { setTimeout, clearTimeout, setInterval, clearInterval, console });
+  const { createAppStore } = load('store.ts', { './slice': reducerModule, './storage': storage }, { setTimeout, clearTimeout, setInterval, clearInterval, console });
   const ready = instance => new Promise(resolve => { if (instance.persistor.getState().bootstrapped) return resolve(); const unsubscribe = instance.persistor.subscribe(() => { if (instance.persistor.getState().bootstrapped) { unsubscribe(); resolve(); } }); });
   const a = createAppStore('account-a'); await ready(a);
+  a.store.dispatch(reducerModule.saveCaseDetails({ details: { stage: 'court_started', jurisdiction: { state: 'CA', county: 'Santa Clara', city: 'Palo Alto' } }, updatedAt: '2026-10-24T12:00:00Z' }));
+  a.store.dispatch(reducerModule.toggleCaseTask('court_started:organize-documents'));
   a.store.dispatch(reducerModule.addMessage({ id: 'secret-a', type: 'chat', role: 'user', content: 'Private case details' }));
   await a.persistor.flush(); a.persistor.pause();
   const b = createAppStore('account-b'); await ready(b);
+  assert.equal(b.store.getState().app.caseStatus, undefined);
   assert.equal(b.store.getState().app.messages.length, 1); b.persistor.pause(); await b.persistor.flush();
   const restored = createAppStore('account-a'); await ready(restored);
+  assert.equal(restored.store.getState().app.caseStatus.details.stage, 'court_started');
+  assert.deepEqual(Array.from(restored.store.getState().app.caseStatus.completedTasks), ['court_started:organize-documents']);
   assert.equal(restored.store.getState().app.messages[1].id, 'secret-a'); restored.persistor.pause(); await restored.persistor.flush();
   assert.equal(memory.get('persist:app'), 'legacy private profile');
 });
@@ -102,6 +107,7 @@ test('route guards expose welcome to guests and Profile as the authenticated lan
   assert.equal(nodes.find(n => n.type === 'Stack').props.initialRouteName, 'profile');
   assert.equal(nodes.filter(n => n.type === 'Protected')[0].props.guard, false);
   assert.equal(nodes.filter(n => n.type === 'Protected')[1].props.guard, true);
+  assert.ok(nodes.some(n => n.type === 'Screen' && n.props.name === 'case-status'));
   assert.ok(nodes.some(n => n.type === 'CondensedInfoProvider'));
 });
 

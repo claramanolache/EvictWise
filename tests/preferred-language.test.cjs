@@ -18,6 +18,7 @@ function setup(saved, legacy) {
     useEffect(fn, deps) { const i = cursor++; if (!slots[i] || deps.some((v, j) => v !== slots[i].deps[j])) { slots[i]?.cleanup?.(); effects.push(() => { slots[i] = { deps, cleanup: fn() }; }); } },
   };
   const mocks = {
+    '@/case/config': { CASE_TEXT: {} },
     react: hooks,
     'react-redux': { useDispatch: () => dispatch, useSelector: fn => fn({ app: state }) },
     '@/slice': { setPreferredLanguage: payload => ({ payload }) },

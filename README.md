@@ -81,7 +81,7 @@ The API validates credentials, uses parameterized SQL, limits attempts by IP and
 
 ### Navigation and appearance
 
-The hamburger menu contains **Chat**, **Profile**, **Calendar**, and **Lawyer Connect**, with icons and a highlighted current page. On desktop, the expanded sidebar takes its own space and the chat resizes. On narrow screens, it opens over the page with a dismissible backdrop.
+The hamburger menu contains **Chat**, **Profile**, **Case Status**, **Calendar**, and **Lawyer Connect**, with icons and a highlighted current page. On desktop, the expanded sidebar takes its own space and the chat resizes. On narrow screens, it opens over the page with a dismissible backdrop.
 
 The compact top-right switch changes light/dark mode. The app initially follows the system theme unless a saved preference exists. Shared colors, spacing, and fonts live in `src/constants/theme.ts`; theme state is managed by `ThemeContext.tsx`.
 
@@ -162,6 +162,23 @@ Use **Edit information** to change report fields, then **Save changes**. Only ch
 
 For display, the report is translated into the preferred language in component memory only. It updates when the report or preference changes, and outdated translation responses are discarded. While translation runs, a loading message is shown. If it fails, the English report is displayed with a retry control; the English download remains available. Display translations never replace the stored report.
 
+### Case Status
+
+Open **Case Status** from the existing authenticated menu (`/case-status`). The page shares the app’s responsive layout, green themes, dark mode, translated interface, and per-account Redux store. No new dependency or server setup is required. The account API currently has no case-record endpoint, so this feature uses device-local persistence rather than cloud sync.
+
+- The current-status card shows a plain-language explanation and evidence level. No case is inferred from an uploaded filename. **Set Up My Case** opens a short branching questionnaire about a decision, hearing, court papers, response, and notice; unknown answers stay unknown. Review the resulting editable details before saving.
+- The five-stage horizontal tracker explores Notice Received, Court Case Started, Court Response, Hearing / Decision, and After Decision. Earlier/current segments are green and future segments gray. Exploring a stage never changes the saved status. The selected stage shows relevant document types, possible next steps, and official resources.
+- **Overview** explains the saved stage, possible next developments, and important deadlines. Existing calendar events appear with their actual dates. Extracted dates remain **Deadline not yet verified**; no dates are calculated from a stage or service date. A deadline is labeled verified only with valid date, source, reviewer, and review timestamp metadata. Calendar links open the existing calendar.
+- **Next Steps** provides stage-specific checklists. Completion is persisted by stage and task ID, independently of legal status. Represented users are not given a task to find a representative. Links reuse Chat, Profile document uploads, Calendar, and Lawyer Connect.
+- **Case Details** edits rental-property state/county/city, reported stage, notice type, service date/method, case number, response status, and representation. Dates are validated; missing fields display unknown. Saved edits are always user-reported and reset any prior verification claim. Last updated reflects saved detail edits. Checkboxes do not file documents or verify anything.
+- **View hypothetical case** previews a clearly labeled fictional California case with **Court Papers Received** as its current status. Its checklist/form changes are in component memory only; no real documents, deadlines, case data, notifications, or account records are created or overwritten. Return to my case restores the real view.
+
+California education is configured separately in `src/case/config.ts`, based on the [California Courts tenant eviction guide](https://selfhelp.courts.ca.gov/eviction-tenant), its notice/response guidance, and its trial guidance. Source review date: October 24, 2026. No specific legal deadlines or outcomes are predicted. Other jurisdictions can save case details but receive no California-specific case guidance until configured. Profile location is only an editable starting point; users should confirm the rental property’s jurisdiction.
+
+Integration boundaries: `src/case/types.ts` defines versioned records, evidence provenance, and deadline verification. `src/case/integrations.ts` defines a document-assessment contract and a structured case context for future RAG/lawyer integration. These are not automatic classifiers or verifiers. There is no court-verification service yet; uploaded documents or AI output alone cannot create a verified badge. A future trusted reviewer/classifier integration must provide provenance and validate authorization before writing those fields. Existing RAG behavior and lawyer matching are reached through their current pages; case-detail edits do not silently change their inputs.
+
+Private records use the existing account keys (`persist:app:user:<account-id>`) and authenticated routes, with no public case API. Browser/device storage is not encrypted; local access protections and backups remain device responsibilities. The fictional sample is kept out of stored user data and all external requests.
+
 ### Calendar and priority checklist
 
 The calendar displays extracted court, payment, and housing events as colored indicators. It initially scrolls to the current month. Select a day to view its events and whether they came from the eviction notice or lease agreement.
@@ -234,7 +251,7 @@ This is a local directory database, separate from user profile storage. The buil
 | Chat, document image transcription, deadline extraction, report generation | Sent to OpenAI from the client as needed. |
 | Translation text, interface strings, and case summary display/English normalization | Sent through the Express API to Google Cloud Translation. |
 
-Accounts are stored on the server, but case profiles and original documents are still local: there is no cloud synchronization for case data. Profile storage is separated by account in the app; localStorage and IndexedDB are not encrypted and remain accessible to someone with access to that browser/device. Legacy unowned `persist:app` data is left intact and is not automatically imported into a new account. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native metadata persistence is not configured with an AsyncStorage adapter; the existing Redux persistence adapter targets web storage, so cross-launch native persistence should not be assumed.
+Accounts are stored on the server, but case profiles and original documents are still local: there is no cloud synchronization for case data. Profile storage is separated by account in the app; localStorage and IndexedDB are not encrypted and remain accessible to someone with access to that browser/device. Legacy unowned `persist:app` data is left intact and is not automatically imported into a new account. Clearing browser site data can remove saved information and originals. Switching browser origins/ports uses a different browser storage area. Native Redux metadata now persists to account-specific files under the app-private document directory (`account-state/`) using the already installed Expo FileSystem. These files are not separately encrypted. Web case saves flush localStorage and report write failures rather than claiming success; native case saves flush the file adapter.
 
 **Development credential limitation:** OpenAI calls currently run in the client with `dangerouslyAllowBrowser: true`. `EXPO_PUBLIC_OPENAI_API_KEY` is bundled into the client and is visible to users, even if `.env.local` is ignored by Git. A production deployment needs authenticated server-side OpenAI calls and appropriate handling of uploaded personal information. Keep actual credentials, environment files, and logs out of commits.
 
@@ -249,6 +266,8 @@ Accounts are stored on the server, but case profiles and original documents are 
 | `src/context/GuidedTourContext.tsx` | First-visit pointer bubbles, target measurement, menu guidance, and completion state. |
 | `src/context/AuthContext.tsx`, `src/auth/api.ts` | Session restoration, authentication, and logout. |
 | `server/auth.cjs` | Private account database, scrypt password hashing, sessions, and throttling. |
+| `src/app/case-status.tsx`, `src/case/` | Case Status page, intake, details form, configuration, evidence rules, and future integration contracts. |
+| `src/storage.ts`, `src/storage.native.ts` | Account-keyed browser/native persistence adapters. |
 | `src/app/profile.tsx` | Profile information, upload/view actions, and case summary placement. |
 | `src/app/calendar.tsx` | Calendar grid, selected-day details, responsive checklist placement. |
 | `src/app/lawyer-connect.tsx` | Local legal-help organization cards from the generated dataset and contact actions. |

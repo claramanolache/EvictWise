@@ -60,4 +60,5 @@ export type RawEvent = {
 export type CalendarEvent = Omit<RawEvent, "deltaDays"> & {
   id: string;
   document: "eviction" | "lease";
+  verification?: import("./case/types").DeadlineVerification;
 };
