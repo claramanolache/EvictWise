@@ -2,7 +2,7 @@ import type { CaseRecord, CaseDetails } from "@/case/types";
 import type { ReportEdits } from "@/utils/condensedInfoEdits";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { CalendarEvent, FileData, Message } from "./types";
+import { CalendarTaskPriority, CalendarEvent, FileData, Message } from "./types";
 import { initialMessage } from "@/constants/assistantAI/prompt";
 
 export interface LocationData {
@@ -31,8 +31,31 @@ export interface State {
   leaseAgreement: FileData | null;
   events: CalendarEvent[];
   completedCalendarTasks?: string[];
+  calendarTaskPriorities?: Record<string, CalendarTaskPriority>;
 
   location: LocationData | null;
+}
+
+// Reject impossible prerequisites and cycles before persisting user planning choices.
+export function validCalendarPriority(events: CalendarEvent[], settings: Record<string, CalendarTaskPriority>, id: string, value: CalendarTaskPriority): boolean {
+  if (!events.some(e => e.id === id) || !value || !Number.isFinite(value.importance) || value.importance < 0 || value.importance > 1
+    || !Number.isFinite(value.effort) || value.effort < 0 || value.effort > 1 || !Array.isArray(value.dependsOn)
+    || value.dependsOn.some(dep => typeof dep !== "string" || dep === id || !events.some(e => e.id === dep))) return false;
+  const visited = new Set<string>();
+  function reachesTarget(node: string): boolean {
+    if (node === id) return true;
+    if (visited.has(node)) return false;
+    visited.add(node);
+    return (settings[node]?.dependsOn ?? []).some(reachesTarget);
+  }
+  return !value.dependsOn.some(reachesTarget);
+}
+
+function pruneCalendarPriorities(state: State) {
+  for (const id of Object.keys(state.calendarTaskPriorities ?? {})) {
+    if (!state.events.some(event => event.id === id)) delete state.calendarTaskPriorities![id];
+  }
+  // Keep dangling prerequisites visible as unavailable instead of silently marking them done.
 }
 
 const initialState: State = {
@@ -69,6 +92,11 @@ export const slice = createSlice({
     },
     setPreferredLanguage: (state, action: PayloadAction<string>) => {
       state.preferredLanguage = action.payload;
+    },
+    setCalendarTaskPriority: (state, action: PayloadAction<{ id: string; priority: CalendarTaskPriority }>) => {
+      const { id, priority } = action.payload;
+      if (!validCalendarPriority(state.events, state.calendarTaskPriorities ?? {}, id, priority)) return;
+      (state.calendarTaskPriorities ??= {})[id] = { ...priority, dependsOn: [...new Set(priority.dependsOn)] };
     },
     toggleCalendarTask: (state, action: PayloadAction<string>) => {
       if (!state.events.some(event => event.id === action.payload)) return;
@@ -114,6 +142,7 @@ export const slice = createSlice({
         (event) => event.id !== action.payload,
       );
       state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => id !== action.payload);
+      pruneCalendarPriorities(state);
     },
     clearEventsByType: (
       state,
@@ -123,6 +152,7 @@ export const slice = createSlice({
         (event) => event.type !== action.payload,
       );
       state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => state.events.some(event => event.id === id));
+      pruneCalendarPriorities(state);
     },
     clearEventsByDocument: (
       state,
@@ -132,10 +162,12 @@ export const slice = createSlice({
         (event) => event.document !== action.payload,
       );
       state.completedCalendarTasks = (state.completedCalendarTasks ?? []).filter(id => state.events.some(event => event.id === id));
+      pruneCalendarPriorities(state);
     },
     clearEvents: (state) => {
       state.events.splice(0, state.events.length);
       state.completedCalendarTasks = [];
+      state.calendarTaskPriorities = {};
     },
     setResolvedLocationCoordinates: (state, action: PayloadAction<{ expected: LocationData; coordinates: { latitude: number; longitude: number } }>) => {
       const { expected, coordinates } = action.payload;
@@ -152,6 +184,7 @@ export const slice = createSlice({
 });
 
 export const {
+  setCalendarTaskPriority,
   saveCaseDetails,
   toggleCaseTask,
   setResolvedLocationCoordinates,

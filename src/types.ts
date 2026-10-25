@@ -62,3 +62,5 @@ export type CalendarEvent = Omit<RawEvent, "deltaDays"> & {
   document: "eviction" | "lease";
   verification?: import("./case/types").DeadlineVerification;
 };
+
+export interface CalendarTaskPriority { importance: number; effort: number; dependsOn: string[] }

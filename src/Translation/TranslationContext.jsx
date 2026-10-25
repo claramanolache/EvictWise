@@ -160,8 +160,23 @@ const ENGLISH_INTERFACE = {
   retryTranslation: "Retry translation",
   preferredLanguage: "Preferred language",
   priorityChecklist: "Priority checklist",
-  priorityChecklistHelp: "Earliest deadlines first. Check off a task when it is complete; tap again to undo.",
+  priorityChecklistHelp: "Ready tasks are ranked by importance, urgency, tasks they unlock, and effort. Waiting tasks follow; completed tasks appear last. Scores are planning guidance—verify deadlines.",
   priorityChecklistEmpty: "Tasks from your calendar deadlines will appear here when you upload your documents.",
+  priorityEdit: "Edit priority",
+  priorityScore: "Priority score",
+  priorityWaiting: "Waiting on",
+  priorityImportance: "Importance",
+  priorityEffort: "Effort",
+  priorityIncrease: "Increase",
+  priorityDecrease: "Decrease",
+  priorityPrerequisites: "Tasks to complete first",
+  priorityNoPrerequisites: "No other tasks available.",
+  priorityMissingTask: "Unavailable task — remove or replace this prerequisite",
+  priorityUnknownDeadline: "Deadline unknown",
+  priorityInvalidDependencies: "Remove unavailable prerequisites or circular dependencies before saving.",
+  prioritySettingsHelp: "Importance and effort range from 0 to 1. Defaults are planning estimates: court 1.0, payment 0.8, housing 0.6; effort 0.5. Choose prerequisites only when another task really must be completed first. Urgency and dependency impact update automatically.",
+  priorityCancel: "Cancel",
+  prioritySave: "Save",
   checklistDeadline: "Deadline",
   assistantDisclaimer: "I am not a professional and can make mistakes! Please check in with a licensed professional.",
   chatSubtitle: "Your housing assistance companion",
@@ -329,7 +344,7 @@ export function TranslationProvider({ children, initialLanguage }) {
       return;
     }
 
-    const cacheKey = `interface-v47-${language}`;
+    const cacheKey = `interface-v48-${language}`;
     const cachedTranslation =
       readStorage(cacheKey);
 

@@ -186,11 +186,39 @@ The calendar displays extracted court, payment, and housing events as colored in
 The **Priority checklist** sits beside the calendar when enough content width is available and above it on smaller layouts:
 
 - Tasks come from existing calendar events, rather than a separate manually entered list.
-- Unfinished tasks appear first, ordered by deadline; overdue dates naturally come first.
+- Ready unfinished tasks appear first, ordered by dynamic priority; tasks waiting on prerequisites follow, then completed tasks.
 - Each task has a checkbox and its deadline in smaller, muted text beside it.
 - Checking a task crosses it out and moves it below unfinished tasks. Tap again to undo.
 - Completion is saved separately from events, so checking a task does not remove its calendar date or alter the case summary.
 - Replacing/removing a document's events removes their old completion markers. Newly extracted events start incomplete.
+
+The checklist uses **P(t) = 40I(t) + 50U(t) + 10D(t) − 10E(t)**:
+
+- `I`: editable importance from 0 to 1. Planning defaults are court 1.0, payment 0.8,
+  housing 0.6; these are heuristics, not determinations of legal importance.
+- `U = 1 / (1 + max(daysRemaining, 0) / 7)`. Tomorrow is 0.875, seven days is 0.5,
+  and today/overdue is 1. Unknown or invalid dates receive 0 urgency and an unknown
+  deadline label. Local calendar-day differences avoid daylight-saving hour changes.
+- `D = min(directlyUnlockedTasks / 3, 1)`. Count only unfinished tasks that would
+  have all their prerequisites completed after this task is checked off. Three or
+  more unlocks gives 1. No dependencies are inferred from legal documents.
+- `E`: editable effort from 0 to 1, default 0.5; lower-effort work receives a smaller
+  deduction. Scores are points, not percentages or legal-confidence estimates.
+
+Use **Edit priority** beside a task to change importance, effort, and prerequisite
+tasks. Circular/self dependencies, unknown task references, and out-of-range values
+cannot be saved. The existing account-scoped Redux persistence saves these choices
+separately from events, so edits do not change dates or regenerate the case summary.
+If a prerequisite is deleted or replaced, its dependent task remains visibly waiting
+on an unavailable task until the user removes or replaces that prerequisite.
+
+Within ready and waiting groups, higher scores come first, with deadline/name/ID
+breaking ties. Completion and undo immediately recalculate unlocks and order; checking
+a task still records the user's report even if prerequisites remain unfinished. The
+clock refreshes every minute and on app/browser foregrounding; because deadlines have
+no saved time of day, urgency changes on local date boundaries. Timer/listeners are
+removed when the checklist unmounts. Saved deadline values and their verification
+status remain unchanged.
 
 Notification scheduling helpers exist in `src/events/notifications.ts`, but are not currently wired into the screens or providers. The calendar/checklist does not automatically send reminders.
 
