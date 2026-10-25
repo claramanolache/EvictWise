@@ -1,11 +1,9 @@
-const { randomBytes, randomUUID, scrypt: scryptCallback, timingSafeEqual, createHash } = require('node:crypto');
-const { promisify } = require('node:util');
+const { randomBytes, randomUUID, createHash } = require('node:crypto');
+const { hashPassword, verifyPassword, isLegacyHash } = require('./passwords.cjs');
 const { mkdirSync, chmodSync, existsSync, openSync, closeSync } = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const express = require('express');
-const scrypt = promisify(scryptCallback);
-const HASH_OPTIONS = { N: 131072, r: 8, p: 1, maxmem: 192 * 1024 * 1024 };
 const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
 const digest = value => createHash('sha256').update(value).digest('hex');
 const languages = new Set(['en', 'es', 'fr', 'de', 'it', 'pt', 'ro', 'ja', 'ko', 'zh-CN']);
@@ -80,15 +78,19 @@ function createAuthRouter({ databasePath = process.env.AUTH_DATABASE_PATH || pat
     hashing++;
     try {
       const existing = db.prepare('SELECT * FROM accounts WHERE username=?').get(normalized);
-      const salt = mode === 'login' && existing ? existing.salt : randomBytes(16).toString('hex');
-      const hash = await scrypt(password, salt, 64, HASH_OPTIONS);
       if (mode === 'login') {
-        if (!existing || !timingSafeEqual(hash, Buffer.from(existing.password_hash, 'hex'))) return res.status(401).json({ error: 'authInvalidCredentials' });
+        if (!await verifyPassword(password, existing)) return res.status(401).json({ error: 'authInvalidCredentials' });
+        if (isLegacyHash(existing.password_hash)) {
+          const upgraded = await hashPassword(password);
+          db.prepare('UPDATE accounts SET password_hash=?, salt=? WHERE id=? AND password_hash=?')
+            .run(upgraded.password_hash, upgraded.salt, existing.id, existing.password_hash);
+        }
         createSession(req, res, existing);
       } else {
+        const credentials = await hashPassword(password);
         if (existing) return res.status(409).json({ error: 'authUsernameUnavailable' });
         const account = { id: randomUUID(), username: normalized, language };
-        db.prepare('INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)').run(account.id, normalized, hash.toString('hex'), salt, language, now());
+        db.prepare('INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)').run(account.id, normalized, credentials.password_hash, credentials.salt, language, now());
         createSession(req, res, account);
       }
     } catch (error) {

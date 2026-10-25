@@ -70,7 +70,7 @@ The account API runs alongside translation on the Express server. Restart an alr
 
 ### Password and session storage
 
-Passwords are hashed on the server with **scrypt** (`N=131072`, `r=8`, `p=1`, 64-byte output), with a random 16-byte salt for each password. Verification uses a timing-safe comparison. This follows the [OWASP scrypt password-storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html); passwords are not stored in plaintext or reversibly encrypted.
+Passwords are hashed on the server with **PBKDF2-HMAC-SHA-256** (600,000 iterations, 32-byte output), with a random 16-byte salt for each password. The salt is stored as 32 hexadecimal characters and decoded to bytes for PBKDF2. Verification uses a timing-safe comparison. Hashes include the algorithm and iteration count. Existing scrypt accounts remain valid and migrate with a fresh salt after their next successful password login; failed logins leave the stored credentials unchanged. This follows the [OWASP password-storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html); passwords are not stored in plaintext or reversibly encrypted.
 
 Accounts, salted hashes, hashed session tokens, and throttling records live in `server/private/accounts.sqlite3`. The private directory is created with owner-only access and the database with mode `0600`; the directory and database journals are excluded from Git. This database is separate from the public lawyer directory. Set `AUTH_DATABASE_PATH` to an absolute path outside the web bundle to use a different private storage location. Protect and back up this file as credential data; it is not an encrypted-at-rest database.
 
@@ -265,7 +265,7 @@ Document AI runs through authenticated `/api/auth/document-ai` endpoints. Set `O
 | `src/app/welcome.tsx` | Language-first welcome, overview, account creation, and sign-in. |
 | `src/context/GuidedTourContext.tsx` | First-visit pointer bubbles, target measurement, menu guidance, and completion state. |
 | `src/context/AuthContext.tsx`, `src/auth/api.ts` | Session restoration, authentication, and logout. |
-| `server/auth.cjs` | Private account database, scrypt password hashing, sessions, and throttling. |
+| `server/auth.cjs` | Private account database, PBKDF2 password hashing, sessions, and throttling. |
 | `src/app/case-status.tsx`, `src/case/` | Case Status page, intake, details form, configuration, evidence rules, and future integration contracts. |
 | `src/storage.ts`, `src/storage.native.ts` | Account-keyed browser/native persistence adapters. |
 | `src/app/profile.tsx` | Profile information, upload/view actions, and case summary placement. |

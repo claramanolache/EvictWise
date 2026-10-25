@@ -36,7 +36,7 @@ test('registration, session restoration, logout, login, and expiry; secrets stay
   assert.equal((await h.request('session', undefined, { Cookie })).data.user.id, signup.data.user.id);
   const db = new DatabaseSync(h.databasePath, { readOnly: true });
   const row = db.prepare('SELECT * FROM accounts').get();
-  assert.equal(row.password_hash.length, 128); assert.equal(row.salt.length, 32);
+  assert.match(row.password_hash, /^pbkdf2-sha256\$600000\$[0-9a-f]{64}$/); assert.equal(row.salt.length, 32);
   assert.ok(!JSON.stringify(row).includes(password));
   assert.notEqual(db.prepare('SELECT token_hash FROM sessions').get().token_hash, Cookie.split('=')[1]);
   db.close();
@@ -107,3 +107,39 @@ test('RAG chat requires a session before accessing knowledge or generation', asy
    await h.request('logout', {}, { Cookie });
    assert.equal((await h.request('document-ai', { operation: 'events', text: 'hello' }, { Cookie })).status, 401);
  });
+
+test('legacy scrypt accounts migrate only after a correct login and keep their account identity', async t => {
+  const h = await setup(t);
+  const { scryptSync, pbkdf2Sync } = require('node:crypto');
+  const salt = '0123456789abcdef0123456789abcdef';
+  const oldHash = scryptSync(password, salt, 64, { N: 131072, r: 8, p: 1, maxmem: 192 * 1024 * 1024 }).toString('hex');
+  const db = new DatabaseSync(h.databasePath);
+  try {
+    db.prepare('INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)').run('legacy-id', 'legacy_user', oldHash, salt, 'es', Date.now());
+    assert.equal((await h.request('login', { username: 'legacy_user', password: 'incorrect' })).status, 401);
+    assert.equal(db.prepare('SELECT password_hash FROM accounts WHERE id=?').get('legacy-id').password_hash, oldHash);
+    const login = await h.request('login', { username: 'legacy_user', password });
+    assert.equal(login.status, 200);
+    assert.equal(login.data.user.id, 'legacy-id');
+    assert.equal(login.data.user.preferredLanguage, 'es');
+    const row = db.prepare('SELECT * FROM accounts WHERE id=?').get('legacy-id');
+    assert.match(row.password_hash, /^pbkdf2-sha256\$600000\$[0-9a-f]{64}$/);
+    assert.notEqual(row.salt, salt);
+    const expected = pbkdf2Sync(password, Buffer.from(row.salt, 'hex'), 600000, 32, 'sha256').toString('hex');
+    assert.equal(row.password_hash, 'pbkdf2-sha256$600000$' + expected);
+    assert.equal((await h.request('session', undefined, { Cookie: login.cookie.split(';')[0] })).data.user.id, 'legacy-id');
+    assert.equal((await h.request('login', { username: 'legacy_user', password })).status, 200);
+    assert.equal(db.prepare('SELECT password_hash FROM accounts WHERE id=?').get('legacy-id').password_hash, row.password_hash);
+  } finally { db.close(); }
+});
+
+test('unknown accounts and malformed stored hashes are rejected without issuing a session', async t => {
+  const h = await setup(t);
+  assert.equal((await h.request('login', { username: 'missing_user', password })).status, 401);
+  const db = new DatabaseSync(h.databasePath);
+  try { db.prepare('INSERT INTO accounts VALUES (?, ?, ?, ?, ?, ?)').run('malformed-id', 'malformed_user', 'pbkdf2-sha256$1$abcd', 'invalid', 'en', Date.now()); }
+  finally { db.close(); }
+  const result = await h.request('login', { username: 'malformed_user', password });
+  assert.equal(result.status, 401);
+  assert.equal(result.cookie, null);
+});
